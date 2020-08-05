@@ -1,0 +1,25 @@
+COMPILER t
+
+CHARACTERS
+  cr = '\r'.
+  lf = '\n'.
+  tab = '\t'.
+  digit = '0'..'9'.
+  hex = digit + 'a'..'f'.
+
+TOKENS
+  number = digit { digit }.
+  hexnum = digit { digit } 'H'.
+  special = "0x".
+
+PRAGMAS
+
+IGNORE cr + lf + tab
+
+PRODUCTIONS
+
+t = "COMPILER" expr.
+
+expr = number '+' hexnum special.
+
+END t.

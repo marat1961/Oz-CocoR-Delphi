@@ -1,0 +1,515 @@
+﻿COMPILER Coco
+
+id = 0;
+str = 1;
+
+MACROS
+  prefix = "cr" .
+
+CHARACTERS
+  letter    = 'A'..'Z' + 'a'..'z' + '_' .
+  digit     = '0' .. '9' .
+  cr        = '\r' .
+  lf        = '\n' .
+  tab       = '\t' .
+  stringCh  = ANY - '"' - '\\' - cr - lf .
+  charCh    = ANY - '\'' - '\\' - cr - lf .
+  printable = '\u0020' .. '\u007e' .
+  stringCh  = ANY - '"' - '\\' - cr - lf .
+  charCh    = ANY - '\'' - '\\' - cr - lf .
+  printable = '\u0020' .. '\u007e' .
+  hex       = digit + 'a'..'f' .
+
+TOKENS
+  ident     = letter { letter | digit } .
+  number    = digit { digit } .
+  string    = '"' { stringCh | '\\' printable } '"' .
+  badString = '"' { stringCh | '\\' printable } (cr | lf) .
+  char      = '\'' ( charCh | '\\' printable { hex } ) '\'' .
+
+PRAGMAS
+  ddtSym    = '$' { digit | letter }.  (. Options.SetDDT(la.val); .)
+
+  optionSym = '$' letter { letter } '='
+              { digit | letter
+              | '-' | '.' | ':'
+              }.                       (. Options.SetOption(la.val); .)
+
+COMMENTS FROM "/*" TO "*/" NESTED
+COMMENTS FROM "//" TO lf
+
+IGNORE cr + lf + tab
+
+/*-------------------------------------------------------------------------*/
+
+PRODUCTIONS
+
+Coco                           (. var
+                                    sym: TSymbol;
+                                    g, g1, g2: TGraph;
+                                    gramName: string;
+                                    s: TCharSet;
+                                    nested, undef, noAttrs: Boolean; .)
+=
+  [ // used statements
+    ANY                        (. pgen.importPos.Start(t); .)
+    { ANY }                    (. pgen.importPos.Update(la, 0); .)
+  ]
+
+  "COMPILER"                   (. genScanner := true;
+                                  tab.ignored := tab.NewCharSet; .)
+  ident                        (. gramName := t.val;
+                                  tab.semDeclPos.Start(la); .)
+  { ANY }                      (. tab.semDeclPos.Update(la, 0); .)
+  [ "IGNORECASE"               (. dfa.ignoreCase := true; .)
+  ]
+  [ "MACROS" { MacroDecl }]
+  [ "CHARACTERS" { SetDecl }]
+  [ "TOKENS"  { TokenDecl<TNodeKind.t> }]
+  [ "NAMES"   { NameDecl }]
+  [ "PRAGMAS" { TokenDecl<TNodeKind.pr> }]
+  { "COMMENTS"                 (.  nested := false; .)
+    "FROM" TokenExpr<g1>
+    "TO" TokenExpr<g2>
+    [ "NESTED"                 (. nested := true; .)
+    ]                          (. dfa.NewComment(g1.l, g2.l, nested); .)
+  }
+  { "IGNORE" Set<s>            (. tab.ignored.Unite(s); .)
+  }
+  SYNC
+  "PRODUCTIONS"                (. if genScanner then
+                                    dfa.MakeDeterministic;
+                                  tab.DeleteNodes; .)
+  { ident                      (. sym := tab.FindSym(t.val);
+                                  undef := sym = nil;
+                                  if undef then
+                                    sym := tab.NewSym(TNodeKind.nt, t.val, t.line)
+                                  else
+                                  begin
+                                    if sym.typ = TNodeKind.nt then
+                                    begin
+                                      if sym.graph <> nil then
+                                        SemErr('name declared twice');
+                                    end
+                                    else
+                                      SemErr('this symbol kind not allowed on left side of production');
+                                    sym.line := t.line;
+                                  end;
+                                  noAttrs := sym.attrPos.Empty;
+                                  sym.attrPos.SetEmpty; .)
+    [ AttrDecl<sym> ]          (. if not undef then
+                                    if noAttrs <> sym.attrPos.Empty then
+                                      SemErr('attribute mismatch between declaration and use of this symbol');
+                                .)
+    [ SemText<sym.semPos> ] WEAK
+    '='
+    Expression<g>              (. sym.graph := g.l;
+                                  tab.Finish(g); .)
+    WEAK
+    '.'
+  }
+  "END" ident                  (. if gramName <> t.val then
+                                    SemErr('name does not match grammar name');
+                                  tab.gramSy := tab.FindSym(gramName);
+                                  if tab.gramSy = nil then
+                                    SemErr('missing production for grammar name')
+                                  else
+                                  begin
+                                    sym := tab.gramSy;
+                                    if not sym.attrPos.Empty then
+                                      SemErr('grammar symbol must not have attributes');
+                                  end;
+                                  tab.noSym := tab.NewSym(TNodeKind.t, '???', 0); // noSym gets highest number
+                                  tab.SetupAnys;
+                                  tab.RenumberPragmas;
+                                  if Options.ddt[2] then tab.PrintNodes;
+                                  if errors.count = 0 then
+                                  begin
+                                    Writeln('checking');
+                                    tab.CompSymbolSets;
+                                    if Options.ddt[7] then tab.XRef;
+                                    if tab.GrammarOk then
+                                    begin
+                                      Write('parser');
+                                      pgen.WriteParser;
+                                      if genScanner then
+                                      begin
+                                        Write(' + scanner');
+                                        dfa.WriteScanner;
+                                        if Options.ddt[0] then
+                                          dfa.PrintStates;
+                                      end;
+                                      Writeln(' generated');
+                                      if Options.ddt[8] then pgen.WriteStatistics;
+                                    end;
+                                  end;
+                                  if Options.ddt[6] then tab.PrintSymbolTable;
+                                .)
+  '.'
+.
+
+/*------------------------------------------------------------------------------------*/
+
+SetDecl                        (. var s: TCharSet; name: string; c: TCharClass; .)
+=
+  ident                        (. name := t.val;
+                                  c := tab.FindCharClass(name);
+                                  if c <> nil then SemErr('name declared twice'); .)
+  '=' Set<s>                   (. if s.Elements = 0 then SemErr('character set must not be empty');
+                                    tab.NewCharClass(name, s); .)
+  '.'
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Set<var s: TCharSet>           (. var s2: TCharSet; .)
+=
+  SimSet<s>
+  { '+' SimSet<s2>             (. s.Unite(s2); .)
+  | '-' SimSet<s2>             (. s := tab.Subtract(s, s2); .)
+  }
+.
+
+/*------------------------------------------------------------------------------------*/
+
+SimSet<var s: TCharSet>        (. var n1, n2, i: Integer; c: TCharClass; name: string; ch: Char; .)
+=                              (. s := tab.NewCharSet; .)
+( ident                        (. c := tab.FindCharClass(t.val);
+                                  if c = nil then
+                                    SemErr('undefined name')
+                                  else
+                                    s.Unite(c.cset); .)
+| string                       (. name := t.val;
+                                  name := tab.Unescape(name.Substring(1, name.Length - 2));
+                                  for ch in name do
+                                    if dfa.ignoreCase then
+                                      s.Incl(ch.ToLower)
+                                    else
+                                      s.Incl(ch); .)
+| Char<n1>                     (. s.Incl(n1); .)
+  [ ".." Char<n2>              (. for i := n1 to n2 do s.Incl(i); .)
+  ]
+| "ANY"                        (. s := tab.NewCharSet; s.Fill; .)
+)
+.
+
+/*--------------------------------------------------------------------------------------*/
+
+Char<var n: Integer>           (. const
+                                    msg = 'unacceptable character value';
+                                  var
+                                    s: string;
+                                    i: Integer; .)
+=
+( "CHR" '(' number             (. s := t.val;
+                                  Val(s, n, i);
+                                  IF n > 65535 then
+                                  begin
+                                    SemErr(msg);
+                                    n := n MOD 65535;
+                                  end; .)
+  ')'
+| char                         (. s := t.val; n := 0;
+                                  s := tab.Unescape(s.Substring(1, s.Length - 2));
+                                  if s.Length = 1 then
+                                    n := Ord(s[1])
+                                  else
+                                    SemErr(msg); .)
+)                              (. if dfa.ignoreCase and Between(char(n), 'A', 'Z') then
+                                    Inc(n, 32); .)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+TokenDecl<typ: TNodeKind>      (. var name: string; kind: Integer; sym: TSymbol; g: TGraph; .)
+=
+  Sym_<name, kind>             (. sym := tab.FindSym(name);
+                                  if sym <> nil then
+                                    SemErr('name declared twice')
+                                  else
+                                  begin
+                                    sym := tab.NewSym(typ, name, t.line);
+                                    sym.tokenKind := TTokenKind.fixedToken;
+                                  end;
+                                  tokenString := ''; .)
+  SYNC
+  ( '=' TokenExpr<g> '.'       (. if kind = str then
+                                    SemErr('a literal must not be declared with a structure');
+                                  tab.Finish(g);
+                                  if (tokenString = '') or tokenString.Equals(noString) then
+                                    dfa.ConvertToStates(g.l, sym)
+                                  else
+                                  begin
+                                    // TokenExpr is a single string
+                                    if tab.literals.ContainsKey(tokenString) then
+                                      SemErr('token string declared twice');
+                                    tab.literals.Add(tokenString, sym);
+                                    dfa.MatchLiteral(tokenString, sym);
+                                  end; .)
+  |                            (. if kind = id then
+                                    genScanner := false
+                                  else
+                                    dfa.MatchLiteral(sym.name, sym); .)
+  )
+  [ SemText<sym.semPos>        (. if typ <> TNodeKind.pr then
+                                    SemErr('semantic action not allowed here'); .)
+  ]
+.
+
+/*------------------------------------------------------------------------------------*/
+
+AttrDecl<sym: TSymbol>
+=
+  '<'                          (. sym.attrPos.Start(la); .)
+  { ANY
+  | badString                  (. SemErr('bad string in attributes'); .)
+  }
+  '>'                          (. if t.pos > sym.attrPos.beg then
+                                    sym.attrPos.Update(t, 0);
+ .)
+| "<."                         (.  sym.attrPos.Start(la); .)
+  { ANY
+  | badString                  (. SemErr('bad string in attributes'); .)
+  }
+  ".>"                         (. if t.pos > sym.attrPos.beg then
+                                    sym.attrPos.Update(t, 0); .)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Expression<var g: TGraph>      (. var g2: TGraph; first: Boolean; .)
+=
+  Term<g>                      (. first := true; .)
+  {  WEAK
+    '|'
+    Term<g2>                   (. if first then
+                                  begin
+                                    tab.MakeFirstAlt(g);
+                                    first := false;
+                                  end;
+                                  tab.MakeAlternative(g, g2); .)
+  }
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Term<var g: TGraph>            (. var g2: TGraph; rslv: TNode; .)
+=
+                               (. rslv := nil; g := nil; .)
+( [                            (. rslv := tab.NewNode(TNodeKind.rslv, nil, la.line); .)
+    Resolver<rslv.pos>         (. g := tab.NewGraph(rslv); .)
+  ]
+  Factor<g2>                   (. if rslv <> nil then
+                                    tab.MakeSequence(g, g2)
+                                  else
+                                    g := g2;.)
+  { Factor<g2>                 (. tab.MakeSequence(g, g2); .)
+  }
+|                              (. g := tab.NewGraph(tab.NewNode(TNodeKind.eps, nil, 0)); .)
+)                              (. if g = nil then
+                                    // invalid start of Term
+                                    g := tab.NewGraph(tab.NewNode(TNodeKind.eps, nil, 0)); .)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Factor<var g: TGraph>          (. var
+                                    name: string; kind: Integer; typ: TNodeKind;
+                                    weak, undef: Boolean; sym: TSymbol; p: TNode; .)
+=                              (. weak := false; g := nil; .)
+( [ "WEAK"                     (. weak := true; .)
+  ]
+  Sym_<name, kind>             (. sym := tab.FindSym(name);
+                                  if (sym = nil) and (kind = str) then
+                                    tab.literals.TryGetValue(name, sym);
+                                  undef := sym = nil;
+                                  if undef then
+                                  begin
+                                    if kind = id then
+                                      // forward nt
+                                      sym := tab.NewSym(TNodeKind.nt, name, 0)
+                                   else if genScanner then
+                                   begin
+                                     sym := tab.NewSym(TNodeKind.t, name, t.line);
+                                     dfa.MatchLiteral(sym.name, sym);
+                                   end
+                                   else
+                                   begin
+                                     // undefined string in production
+                                     SemErr('undefined string in production');
+                                     sym := tab.eofSy;  // dummy
+                                   end;
+                                  end;
+                                  typ := sym.typ;
+                                  if (typ <> TNodeKind.t) and (typ <> TNodeKind.nt) then
+                                    SemErr('this symbol kind is not allowed in a production');
+                                  if weak then
+                                    if typ = TNodeKind.t then
+                                      typ := TNodeKind.wt
+                                    else
+                                      SemErr('only terminals may be weak');
+                                  p := tab.NewNode(typ, sym, t.line);
+                                  g := tab.NewGraph(p); .)
+  [ Attribs<p>                 (. if kind <> id then
+                                    SemErr('a literal must not have attributes'); .)
+  ]                            (. if undef then
+                                    // dummy
+                                    sym.attrPos := p.pos
+                                  else if p.pos.Empty <> sym.attrPos.Empty then
+                                    SemErr('attribute mismatch between declaration and use of this symbol'); .)
+| '(' Expression<g> ')'
+| '[' Expression<g> ']'        (. tab.MakeOption(g); .)
+| '{' Expression<g> '}'        (. tab.MakeIteration(g); .)
+|                              (. p := tab.NewNode(TNodeKind.sem, nil, 0); .)
+  SemText<p.pos>               (. g := tab.NewGraph(p); .)
+| "ANY"                        (. p := tab.NewNode(TNodeKind.any, nil, 0);  // p.set is set in tab.SetupAnys
+                                  g := tab.NewGraph(p); .)
+| "SYNC"                       (. p := tab.NewNode(TNodeKind.sync, nil, 0);
+                                  g := tab.NewGraph(p); .)
+)                              (. if g = nil then
+                                    // invalid start of Factor
+                                    g := tab.NewGraph(tab.NewNode(TNodeKind.eps, nil, 0)); .)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Resolver<var pos: TPosition>
+=
+  "IF" '('                     (. pos.Start(la); .)
+  Condition                    (. pos.Update(t); .)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Condition = { '(' Condition | ANY } ')' .
+
+/*------------------------------------------------------------------------------------*/
+
+TokenExpr<var g: TGraph>       (. var g2: TGraph; first: Boolean; .)
+=
+  TokenTerm<g>                 (. first := true; .)
+  { WEAK
+    '|'
+    TokenTerm<g2>              (. if first then
+                                  begin
+                                    tab.MakeFirstAlt(g);
+                                    first := false;
+                                  end;
+                                  tab.MakeAlternative(g, g2); .)
+  }
+.
+
+/*------------------------------------------------------------------------------------*/
+
+TokenTerm<var g: TGraph>       (. var g2: TGraph; .)
+=
+  TokenFactor<g>
+  { TokenFactor<g2>            (. tab.MakeSequence(g, g2); .)
+  }
+  [ "CONTEXT"
+    '(' TokenExpr<g2>          (. tab.SetContextTrans(g2.l); dfa.hasCtxMoves := true;
+                                  tab.MakeSequence(g, g2); .)
+    ')'
+  ]
+.
+
+/*------------------------------------------------------------------------------------*/
+
+TokenFactor<var g: TGraph>     (. var name: string; kind: Integer; c: TCharClass; p: TNode; .)
+=
+                               (. g := nil; .)
+( Sym_<name, kind>             (. if kind = id then
+                                  begin
+                                    c := tab.FindCharClass(name);
+                                    if c = nil then
+                                    begin
+                                      SemErr('undefined name');
+                                      c := tab.NewCharClass(name, tab.NewCharSet);
+                                    end;
+                                    p := tab.NewNode(TNodeKind.clas, nil, 0); p.val := c.n;
+                                    g := tab.NewGraph(p);
+                                    tokenString := noString;
+                                  end
+                                  else
+                                  begin
+                                    // str
+                                    g := tab.StrToGraph(name);
+                                    if tokenString = '' then
+                                      tokenString := name
+                                    else
+                                      tokenString := noString;
+                                  end; .)
+| '(' TokenExpr<g> ')'
+| '[' TokenExpr<g> ']'         (. tab.MakeOption(g); tokenString := noString; .)
+| '{' TokenExpr<g> '}'         (. tab.MakeIteration(g); tokenString := noString; .)
+)                              (. if g = nil then
+                                    // invalid start of TokenFactor
+                                    g := tab.NewGraph(tab.NewNode(TNodeKind.eps, nil, 0)); .)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Sym_<var name: string; var kind: Integer>
+=                              (. name := '???'; kind := id; .)
+( ident                        (. kind := id; name := t.val; .)
+| (string                      (. name := t.val; .)
+  | char                       (. name := '''' + t.val.Substring(1, t.val.Length - 2) + ''''; .)
+  )                            (. kind := str;
+                                  if dfa.ignoreCase then name := name.ToLower;
+                                  if name.IndexOf(' ') >= 0 then
+                                    SemErr('literal tokens must not contain blanks'); .)
+)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Attribs<p: TNode>
+=
+  '<'                          (. p.pos.Start(la); .)
+  { ANY
+  | badString                  (. SemErr('bad string in attributes'); .)
+  }
+  '>'                          (. if t.pos > p.pos.beg then
+                                    p.pos.Update(t); .)
+| "<."                         (. p.pos.Start(la); .)
+  { ANY
+  | badString                  (. SemErr('bad string in attributes'); .)
+  }
+  ".>"                         (. if t.pos > p.pos.beg then
+                                    p.pos.Update(t); .)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+SemText<var pos: TPosition>
+=
+  "(."                         (. pos.Start(la); .)
+  { ANY
+  | badString                  (. SemErr('bad string in semantic action'); .)
+  | "(."                       (. SemErr('missing end of previous semantic action'); .)
+  }
+  ".)"                         (. pos.Update(t); .)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+NameDecl                       (. var name, s: string; .)
+= ident                        (. name := t.val; .)
+  '='
+  ( ident                      (. s := t.val; .)
+  | string                     (. s := t.val;
+                                  Dfa.FixString(s); .)
+       )                       (. tab.NewName(name, s); .)
+  '.'
+.
+
+MacroDecl                      (. var name, s: string; .)
+= ident                        (. name := t.val; .)
+  '='
+  string                       (. s := tab.Unescape(t.val.Substring(1, t.val.Length - 2));
+                                  tab.NewMacro(name, s); .)
+  '.'
+.
+
+END Coco.
+

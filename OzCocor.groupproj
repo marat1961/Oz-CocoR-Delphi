@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{9E2100F4-11F5-4DF7-B5B4-5947BCBDF2A9}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Cocor.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="test\CocorTests.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Cocor">
+        <MSBuild Projects="Cocor.dproj"/>
+    </Target>
+    <Target Name="Cocor:Clean">
+        <MSBuild Projects="Cocor.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Cocor:Make">
+        <MSBuild Projects="Cocor.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="CocorTests">
+        <MSBuild Projects="test\CocorTests.dproj"/>
+    </Target>
+    <Target Name="CocorTests:Clean">
+        <MSBuild Projects="test\CocorTests.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CocorTests:Make">
+        <MSBuild Projects="test\CocorTests.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Cocor;CocorTests"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Cocor:Clean;CocorTests:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Cocor:Make;CocorTests:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

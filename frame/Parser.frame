@@ -1,0 +1,184 @@
+﻿-->begin<
+unit -->unitname<;
+
+interface
+
+uses
+  System.Classes, System.SysUtils, System.Character, System.IOUtils,
+  Oz.Cocor.Utils, Oz.Cocor.Lib, Oz.Cocor.Options, Oz.Cocor.Scanner,
+  Oz.Cocor.Tab, Oz.Cocor.DFA, Oz.Cocor.ParserGen;
+
+type
+
+{$Region '-->parser<'}
+
+  -->parser<= class(TBaseParser)
+  const
+-->declarations<
+-->constants<  private
+    FTraceStream: TMemoryStream;
+    genScanner: Boolean;
+-->headers<  protected
+    function Starts(s, kind: Integer): Boolean; override;
+    procedure Get; override;
+  public
+    // other Coco objects that refer to these variables
+    options: TOptions;
+    trace: TStreamWriter;
+    tab: TTab;
+    dfa: TDFA;
+    pgen: TParserGen;
+    tokenString: string;
+  public
+    constructor Create(scanner: TBaseScanner; listing: TStrings);
+    destructor Destroy; override;
+    function ErrorMsg(nr: Integer): string; override;
+    procedure Parse; override;
+    procedure SaveTraceToFile(const fileName: string);
+  end;
+
+{$EndRegion}
+
+{$Region 'TCocoPartHelper'}
+
+  TCocoPartHelper = class helper for TCocoPart
+  private
+    function GetParser: -->parser<;
+    function GetScanner: -->scanner<;
+    function GetOptions: TOptions;
+    function GetTab: TTab;
+    function GetDfa: TDFA;
+    function GetPgen: TParserGen;
+    function GetTrace: TTextWriter;
+    function GetErrors: TErrors;
+  public
+    property parser: -->parser< read GetParser;
+    property scanner: -->scanner< read GetScanner;
+    property options: TOptions read GetOptions;
+    property tab: TTab read GetTab;
+    property dfs: TDFA read GetDFA;
+    property pgen: TParserGen read GetPgen;
+    property trace: TTextWriter read GetTrace;
+    property errors: TErrors read GetErrors;
+ end;
+
+{$EndRegion}
+
+implementation
+
+{$Region '-->parser<'}
+
+constructor -->parser<.Create(scanner: TBaseScanner; listing: TStrings);
+begin
+  inherited Create(scanner, listing);
+  options := GetOptions;
+  FTraceStream := TMemoryStream.Create;
+  trace := TStreamWriter.Create(FTraceStream);
+  tab := TTab.Create(Self);
+  dfa := TDFA.Create(Self);
+  pgen := TParserGen.Create(Self, scanner.buffer);
+end;
+
+destructor -->parser<.Destroy;
+begin
+  trace.Free;
+  tab.Free;
+  dfa.Free;
+  pgen.Free;
+  FTraceStream.Free;
+  inherited;
+end;
+
+procedure -->parser<.SaveTraceToFile(const fileName: string);
+begin
+  FTraceStream.Position := 0;
+  FTraceStream.SaveToFile(fileName);
+  trace.Close;
+end;
+
+procedure -->parser<.Get;
+begin
+  repeat
+    t := la;
+    la := scanner.Scan;
+    if la.kind <= scanner.MaxToken then
+    begin
+      Inc(errDist);
+      break;
+    end;
+-->pragmas<
+    la := t;
+  until False;
+end;
+-->productions<
+procedure -->parser<.Parse;
+begin
+  la := scanner.NewToken;
+  la.val := '';
+  Get;
+-->parseRoot<
+end;
+
+function -->parser<.Starts(s, kind: Integer): Boolean;
+-->initialization<
+begin
+  Result := sets[s, kind];
+end;
+
+function -->parser<.ErrorMsg(nr: Integer): string;
+-->errors<
+begin
+  if nr <= MaxErr then
+    Result := Errors[nr]
+  else
+    Result := 'error ' + IntToStr(nr);
+end;
+
+{$EndRegion}
+
+{$Region 'TCocoPartHelper'}
+
+function TCocoPartHelper.GetParser: -->parser<;
+begin
+  Result := FParser as -->parser<;
+end;
+
+function TCocoPartHelper.GetScanner: -->scanner<;
+begin
+  Result := parser.scanner as -->scanner<;
+end;
+
+function TCocoPartHelper.GetOptions: TOptions;
+begin
+  Result := parser.options;
+end;
+
+function TCocoPartHelper.GetTab: TTab;
+begin
+  Result := parser.tab;
+end;
+
+function TCocoPartHelper.GetDfa: TDFA;
+begin
+  Result := parser.dfa;
+end;
+
+function TCocoPartHelper.GetPgen: TParserGen;
+begin
+  Result := parser.pgen;
+end;
+
+function TCocoPartHelper.GetTrace: TTextWriter;
+begin
+  Result := parser.trace;
+end;
+
+function TCocoPartHelper.GetErrors: TErrors;
+begin
+  Result := parser.errors;
+end;
+
+{$EndRegion}
+
+end.
+
