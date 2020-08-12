@@ -61,7 +61,7 @@ var
   str: TStringList;
   parser: TcrParser;
   sr: TSearchRec;
-  src, filename: string;
+  src, stem, filename: string;
 begin
   options := GetOptions;
   Writeln(options.GetVersion);
@@ -93,7 +93,8 @@ begin
         FindClose(sr);
         Writeln(parser.errors.count, ' errors detected');
         parser.PrintErrors;
-        filename := TPath.Combine(options.srcDir, 'errors.lst');
+        stem := TPath.GetFilenameWithoutExtension(options.SrcName);
+        filename := TPath.Combine(options.srcDir, stem + '.lst');
         str.SaveToFile(filename);
       finally
         str.Free;
