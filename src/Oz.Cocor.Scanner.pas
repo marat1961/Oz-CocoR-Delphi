@@ -27,28 +27,28 @@ var
   i: Integer;
 begin
   inherited;
-  MaxToken := 44;
-  NoSym := 44;
+  MaxToken := 43;
+  NoSym := 43;
   for i := 65 to 90 do start.Add(i, 1);
   for i := 95 to 95 do start.Add(i, 1);
   for i := 97 to 122 do start.Add(i, 1);
   for i := 48 to 57 do start.Add(i, 2);
-  start.Add(34, 12);
-  start.Add(39, 5);
+  start.Add(34, 3);
+  start.Add(39, 6);
   start.Add(36, 13);
-  start.Add(61, 16);
-  start.Add(46, 31);
-  start.Add(43, 17);
-  start.Add(45, 18);
-  start.Add(40, 32);
-  start.Add(41, 20);
-  start.Add(60, 33);
-  start.Add(62, 21);
-  start.Add(124, 24);
-  start.Add(91, 25);
-  start.Add(93, 26);
-  start.Add(123, 27);
-  start.Add(125, 28);
+  start.Add(61, 15);
+  start.Add(46, 30);
+  start.Add(43, 16);
+  start.Add(45, 17);
+  start.Add(40, 31);
+  start.Add(41, 19);
+  start.Add(60, 32);
+  start.Add(62, 20);
+  start.Add(124, 23);
+  start.Add(91, 24);
+  start.Add(93, 25);
+  start.Add(123, 26);
+  start.Add(125, 27);
   start.Add(Ord(TBuffer.EF), -1);
 end;
 
@@ -164,45 +164,45 @@ end;
 procedure TcrScanner.CheckLiteral;
 begin
   if t.val = 'COMPILER' then
-    t.kind := 6
+    t.kind := 5
   else if t.val = 'IGNORECASE' then
-    t.kind := 7
+    t.kind := 6
   else if t.val = 'MACROS' then
-    t.kind := 8
+    t.kind := 7
   else if t.val = 'CHARACTERS' then
-    t.kind := 9
+    t.kind := 8
   else if t.val = 'TOKENS' then
-    t.kind := 10
+    t.kind := 9
   else if t.val = 'NAMES' then
-    t.kind := 11
+    t.kind := 10
   else if t.val = 'PRAGMAS' then
-    t.kind := 12
+    t.kind := 11
   else if t.val = 'COMMENTS' then
-    t.kind := 13
+    t.kind := 12
   else if t.val = 'FROM' then
-    t.kind := 14
+    t.kind := 13
   else if t.val = 'TO' then
-    t.kind := 15
+    t.kind := 14
   else if t.val = 'NESTED' then
-    t.kind := 16
+    t.kind := 15
   else if t.val = 'IGNORE' then
-    t.kind := 17
+    t.kind := 16
   else if t.val = 'PRODUCTIONS' then
-    t.kind := 18
+    t.kind := 17
   else if t.val = 'END' then
-    t.kind := 21
+    t.kind := 20
   else if t.val = 'ANY' then
-    t.kind := 25
+    t.kind := 24
   else if t.val = 'CHR' then
-    t.kind := 26
+    t.kind := 25
   else if t.val = 'WEAK' then
-    t.kind := 34
+    t.kind := 33
   else if t.val = 'SYNC' then
-    t.kind := 39
+    t.kind := 38
   else if t.val = 'IF' then
-    t.kind := 40
+    t.kind := 39
   else if t.val = 'CONTEXT' then
-    t.kind := 41
+    t.kind := 40
 end;
 
 function TcrScanner.NextToken: TToken;
@@ -267,51 +267,61 @@ begin
         end;
       end;
       3:
+      if (ch <= #9) or Between(ch, #11, #12) or Between(ch, #14, '!') or
+         Between(ch, '#', '[') or Between(ch, ']', #65535) then
       begin
-        t.kind := 3; break;
-      end;
-      4:
+        AddCh; state := 3;
+      end
+      else if ch = '"' then
       begin
-        t.kind := 4; break;
-      end;
-      5:
-      if (ch <= #9) or Between(ch, #11, #12) or Between(ch, #14, '&') or
-         Between(ch, '(', '[') or Between(ch, ']', #65535) then
-      begin
-        AddCh; state := 6;
+        AddCh; state := 5;
       end
       else if ch = '\' then
       begin
-        AddCh; state := 7;
+        AddCh; state := 4;
       end
       else
       begin
         state := 0;
       end;
-      6:
-      if ch = #39 then
+      4:
+      if Between(ch, ' ', '~') then
       begin
-        AddCh; state := 9;
+        AddCh; state := 3;
+      end
+      else
+      begin
+        state := 0;
+      end;
+      5:
+      begin
+        t.kind := 3; break;
+      end;
+      6:
+      if (ch <= #9) or Between(ch, #11, #12) or Between(ch, #14, '&') or
+         Between(ch, '(', '[') or Between(ch, ']', #65535) then
+      begin
+        AddCh; state := 7;
+      end
+      else if ch = '\' then
+      begin
+        AddCh; state := 8;
       end
       else
       begin
         state := 0;
       end;
       7:
-      if Between(ch, ' ', '~') then
+      if ch = #39 then
       begin
-        AddCh; state := 8;
+        AddCh; state := 10;
       end
       else
       begin
         state := 0;
       end;
       8:
-      if Between(ch, '0', '9') or Between(ch, 'a', 'f') then
-      begin
-        AddCh; state := 8;
-      end
-      else if ch = #39 then
+      if Between(ch, ' ', '~') then
       begin
         AddCh; state := 9;
       end
@@ -320,105 +330,91 @@ begin
         state := 0;
       end;
       9:
+      if Between(ch, '0', '9') or Between(ch, 'a', 'f') then
       begin
-        t.kind := 5; break;
+        AddCh; state := 9;
+      end
+      else if ch = #39 then
+      begin
+        AddCh; state := 10;
+      end
+      else
+      begin
+        state := 0;
       end;
       10:
       begin
-        recEnd := pos; recKind := 45;
-        if Between(ch, '0', '9') or Between(ch, 'A', 'Z') or (ch = '_') or
-           Between(ch, 'a', 'z') then
-        begin
-          AddCh; state := 10;
-        end
-        else
-        begin
-          t.kind := 45; break;
-        end;
+        t.kind := 4; break;
       end;
       11:
       begin
-        recEnd := pos; recKind := 46;
-        if Between(ch, '-', '.') or Between(ch, '0', ':') or Between(ch, 'A', 'Z') or
-           (ch = '_') or Between(ch, 'a', 'z') then
+        recEnd := pos; recKind := 44;
+        if Between(ch, '0', '9') or Between(ch, 'A', 'Z') or (ch = '_') or
+           Between(ch, 'a', 'z') then
         begin
           AddCh; state := 11;
         end
         else
         begin
-          t.kind := 46; break;
+          t.kind := 44; break;
         end;
       end;
       12:
-      if (ch <= #9) or Between(ch, #11, #12) or Between(ch, #14, '!') or
-         Between(ch, '#', '[') or Between(ch, ']', #65535) then
       begin
-        AddCh; state := 12;
-      end
-      else if (ch = #10) or (ch = #13) then
-      begin
-        AddCh; state := 4;
-      end
-      else if ch = '"' then
-      begin
-        AddCh; state := 3;
-      end
-      else if ch = '\' then
-      begin
-        AddCh; state := 14;
-      end
-      else
-      begin
-        state := 0;
+        recEnd := pos; recKind := 45;
+        if Between(ch, '-', '.') or Between(ch, '0', ':') or Between(ch, 'A', 'Z') or
+           (ch = '_') or Between(ch, 'a', 'z') then
+        begin
+          AddCh; state := 12;
+        end
+        else
+        begin
+          t.kind := 45; break;
+        end;
       end;
       13:
       begin
-        recEnd := pos; recKind := 45;
+        recEnd := pos; recKind := 44;
         if Between(ch, '0', '9') then
-        begin
-          AddCh; state := 10;
-        end
-        else if Between(ch, 'A', 'Z') or (ch = '_') or Between(ch, 'a', 'z') then
-        begin
-          AddCh; state := 15;
-        end
-        else
-        begin
-          t.kind := 45; break;
-        end;
-      end;
-      14:
-      if Between(ch, ' ', '~') then
-      begin
-        AddCh; state := 12;
-      end
-      else
-      begin
-        state := 0;
-      end;
-      15:
-      begin
-        recEnd := pos; recKind := 45;
-        if Between(ch, '0', '9') then
-        begin
-          AddCh; state := 10;
-        end
-        else if Between(ch, 'A', 'Z') or (ch = '_') or Between(ch, 'a', 'z') then
-        begin
-          AddCh; state := 15;
-        end
-        else if ch = '=' then
         begin
           AddCh; state := 11;
         end
+        else if Between(ch, 'A', 'Z') or (ch = '_') or Between(ch, 'a', 'z') then
+        begin
+          AddCh; state := 14;
+        end
         else
         begin
-          t.kind := 45; break;
+          t.kind := 44; break;
         end;
+      end;
+      14:
+      begin
+        recEnd := pos; recKind := 44;
+        if Between(ch, '0', '9') then
+        begin
+          AddCh; state := 11;
+        end
+        else if Between(ch, 'A', 'Z') or (ch = '_') or Between(ch, 'a', 'z') then
+        begin
+          AddCh; state := 14;
+        end
+        else if ch = '=' then
+        begin
+          AddCh; state := 12;
+        end
+        else
+        begin
+          t.kind := 44; break;
+        end;
+      end;
+      15:
+      begin
+        t.kind := 18; break;
       end;
       16:
       begin
-        t.kind := 19; break;
+        t.kind := 21; break;
       end;
       17:
       begin
@@ -430,11 +426,11 @@ begin
       end;
       19:
       begin
-        t.kind := 24; break;
+        t.kind := 27; break;
       end;
       20:
       begin
-        t.kind := 28; break;
+        t.kind := 29; break;
       end;
       21:
       begin
@@ -450,7 +446,7 @@ begin
       end;
       24:
       begin
-        t.kind := 33; break;
+        t.kind := 34; break;
       end;
       25:
       begin
@@ -466,7 +462,7 @@ begin
       end;
       28:
       begin
-        t.kind := 38; break;
+        t.kind := 41; break;
       end;
       29:
       begin
@@ -474,50 +470,46 @@ begin
       end;
       30:
       begin
-        t.kind := 43; break;
-      end;
-      31:
-      begin
-        recEnd := pos; recKind := 20;
+        recEnd := pos; recKind := 19;
         if ch = '.' then
         begin
-          AddCh; state := 19;
+          AddCh; state := 18;
         end
         else if ch = '>' then
         begin
-          AddCh; state := 23;
+          AddCh; state := 22;
         end
         else if ch = ')' then
-        begin
-          AddCh; state := 30;
-        end
-        else
-        begin
-          t.kind := 20; break;
-        end;
-      end;
-      32:
-      begin
-        recEnd := pos; recKind := 27;
-        if ch = '.' then
         begin
           AddCh; state := 29;
         end
         else
         begin
-          t.kind := 27; break;
+          t.kind := 19; break;
         end;
       end;
-      33:
+      31:
       begin
-        recEnd := pos; recKind := 29;
+        recEnd := pos; recKind := 26;
         if ch = '.' then
         begin
-          AddCh; state := 22;
+          AddCh; state := 28;
         end
         else
         begin
-          t.kind := 29; break;
+          t.kind := 26; break;
+        end;
+      end;
+      32:
+      begin
+        recEnd := pos; recKind := 28;
+        if ch = '.' then
+        begin
+          AddCh; state := 21;
+        end
+        else
+        begin
+          t.kind := 28; break;
         end;
       end;
     end;

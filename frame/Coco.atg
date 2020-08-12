@@ -15,16 +15,12 @@ CHARACTERS
   stringCh  = ANY - '"' - '\\' - cr - lf .
   charCh    = ANY - '\'' - '\\' - cr - lf .
   printable = '\u0020' .. '\u007e' .
-  stringCh  = ANY - '"' - '\\' - cr - lf .
-  charCh    = ANY - '\'' - '\\' - cr - lf .
-  printable = '\u0020' .. '\u007e' .
   hex       = digit + 'a'..'f' .
 
 TOKENS
   ident     = letter { letter | digit } .
   number    = digit { digit } .
   string    = '"' { stringCh | '\\' printable } '"' .
-  badString = '"' { stringCh | '\\' printable } (cr | lf) .
   char      = '\'' ( charCh | '\\' printable { hex } ) '\'' .
 
 PRAGMAS
@@ -261,16 +257,12 @@ TokenDecl<typ: TNodeKind>      (. var name: string; kind: Integer; sym: TSymbol;
 AttrDecl<sym: TSymbol>
 =
   '<'                          (. sym.attrPos.Start(la); .)
-  { ANY
-  | badString                  (. SemErr('bad string in attributes'); .)
-  }
+  { ANY }
   '>'                          (. if t.pos > sym.attrPos.beg then
                                     sym.attrPos.Update(t, 0);
  .)
 | "<."                         (.  sym.attrPos.Start(la); .)
-  { ANY
-  | badString                  (. SemErr('bad string in attributes'); .)
-  }
+  { ANY }
   ".>"                         (. if t.pos > sym.attrPos.beg then
                                     sym.attrPos.Update(t, 0); .)
 .
@@ -466,15 +458,11 @@ Sym_<var name: string; var kind: Integer>
 Attribs<p: TNode>
 =
   '<'                          (. p.pos.Start(la); .)
-  { ANY
-  | badString                  (. SemErr('bad string in attributes'); .)
-  }
+  { ANY }
   '>'                          (. if t.pos > p.pos.beg then
                                     p.pos.Update(t); .)
 | "<."                         (. p.pos.Start(la); .)
-  { ANY
-  | badString                  (. SemErr('bad string in attributes'); .)
-  }
+  { ANY }
   ".>"                         (. if t.pos > p.pos.beg then
                                     p.pos.Update(t); .)
 .
@@ -485,7 +473,6 @@ SemText<var pos: TPosition>
 =
   "(."                         (. pos.Start(la); .)
   { ANY
-  | badString                  (. SemErr('bad string in semantic action'); .)
   | "(."                       (. SemErr('missing end of previous semantic action'); .)
   }
   ".)"                         (. pos.Update(t); .)

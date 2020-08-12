@@ -1,4 +1,6 @@
 unit Oz.Cocor.DFA;
+// Compiler Generator Coco/R, for Delphi
+// Copyright (c) 2020 Tomsk, Marat Shaimardanov
 
 // Generation of the Scanner Automaton
 
