@@ -1,3 +1,4 @@
+
 unit Oz.Cocor.Scanner;
 
 interface
@@ -27,8 +28,8 @@ var
   i: Integer;
 begin
   inherited;
-  MaxToken := 43;
-  NoSym := 43;
+  MaxToken := 44;
+  NoSym := 44;
   for i := 65 to 90 do start.Add(i, 1);
   for i := 95 to 95 do start.Add(i, 1);
   for i := 97 to 122 do start.Add(i, 1);
@@ -37,18 +38,19 @@ begin
   start.Add(39, 6);
   start.Add(36, 13);
   start.Add(61, 15);
-  start.Add(46, 30);
+  start.Add(46, 32);
   start.Add(43, 16);
   start.Add(45, 17);
-  start.Add(40, 31);
+  start.Add(40, 33);
   start.Add(41, 19);
-  start.Add(60, 32);
+  start.Add(60, 34);
   start.Add(62, 20);
   start.Add(124, 23);
   start.Add(91, 24);
   start.Add(93, 25);
   start.Add(123, 26);
   start.Add(125, 27);
+  start.Add(47, 29);
   start.Add(Ord(TBuffer.EF), -1);
 end;
 
@@ -211,6 +213,7 @@ var
 begin
   while (ch = ' ') or Between(ch, #9, #10) or (ch = #13) do
     NextCh;
+  if not SkipComments then
   if ((ch = '/') and Comment0) or
      ((ch = '/') and Comment1) then exit(NextToken);
   recKind := NoSym;
@@ -348,7 +351,7 @@ begin
       end;
       11:
       begin
-        recEnd := pos; recKind := 44;
+        recEnd := pos; recKind := 45;
         if Between(ch, '0', '9') or Between(ch, 'A', 'Z') or (ch = '_') or
            Between(ch, 'a', 'z') then
         begin
@@ -356,12 +359,12 @@ begin
         end
         else
         begin
-          t.kind := 44; break;
+          t.kind := 45; break;
         end;
       end;
       12:
       begin
-        recEnd := pos; recKind := 45;
+        recEnd := pos; recKind := 46;
         if Between(ch, '-', '.') or Between(ch, '0', ':') or Between(ch, 'A', 'Z') or
            (ch = '_') or Between(ch, 'a', 'z') then
         begin
@@ -369,12 +372,12 @@ begin
         end
         else
         begin
-          t.kind := 45; break;
+          t.kind := 46; break;
         end;
       end;
       13:
       begin
-        recEnd := pos; recKind := 44;
+        recEnd := pos; recKind := 45;
         if Between(ch, '0', '9') then
         begin
           AddCh; state := 11;
@@ -385,12 +388,12 @@ begin
         end
         else
         begin
-          t.kind := 44; break;
+          t.kind := 45; break;
         end;
       end;
       14:
       begin
-        recEnd := pos; recKind := 44;
+        recEnd := pos; recKind := 45;
         if Between(ch, '0', '9') then
         begin
           AddCh; state := 11;
@@ -405,7 +408,7 @@ begin
         end
         else
         begin
-          t.kind := 44; break;
+          t.kind := 45; break;
         end;
       end;
       15:
@@ -465,10 +468,23 @@ begin
         t.kind := 41; break;
       end;
       29:
+      if ch = '/' then
+      begin
+        AddCh; state := 30;
+      end
+      else
+      begin
+        state := 0;
+      end;
+      30:
       begin
         t.kind := 42; break;
       end;
-      30:
+      31:
+      begin
+        t.kind := 43; break;
+      end;
+      32:
       begin
         recEnd := pos; recKind := 19;
         if ch = '.' then
@@ -481,14 +497,14 @@ begin
         end
         else if ch = ')' then
         begin
-          AddCh; state := 29;
+          AddCh; state := 31;
         end
         else
         begin
           t.kind := 19; break;
         end;
       end;
-      31:
+      33:
       begin
         recEnd := pos; recKind := 26;
         if ch = '.' then
@@ -500,7 +516,7 @@ begin
           t.kind := 26; break;
         end;
       end;
-      32:
+      34:
       begin
         recEnd := pos; recKind := 28;
         if ch = '.' then

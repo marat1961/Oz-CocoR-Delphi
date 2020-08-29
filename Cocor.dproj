@@ -82,8 +82,8 @@
         <DCC_DcuOutput>.\bin\$(Config)\$(Platform)\Units</DCC_DcuOutput>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Manifest_File>(None)</Manifest_File>
-        <Debugger_RunParams>-namespace Oz.Pb -checkEOF -trace AG protobuf.atg</Debugger_RunParams>
-        <Debugger_CWD>D:\Work\oz\protobuf-delphi\src\protoc\atg</Debugger_CWD>
+        <Debugger_RunParams>-namespace Oz.Cocor -checkEOF -trace AG Coco.atg</Debugger_RunParams>
+        <Debugger_CWD>D:\Work\oz\coco\frame</Debugger_CWD>
         <DCC_RangeChecking>true</DCC_RangeChecking>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">

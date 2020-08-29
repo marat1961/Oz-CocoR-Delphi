@@ -68,6 +68,7 @@ var
 begin
   while (ch = ' ') or -->scan1< do
     NextCh;
+  if not SkipComments then
 -->scan2<
   recKind := NoSym;
   recEnd := pos;

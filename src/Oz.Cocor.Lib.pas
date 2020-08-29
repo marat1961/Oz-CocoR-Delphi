@@ -118,6 +118,7 @@ type
     start: TStartMap;  // maps first token character to start state
     tval: string;      // text of current token
     tlen: Integer;     // length of current token
+    skipComments: Boolean;
     procedure SetScannerBehindT;
     function NextToken: TToken; virtual; abstract;
     // peek for the next token, ignore pragmas
@@ -204,6 +205,9 @@ type
     procedure SemErr(const s: string);
     procedure Parse; virtual; abstract;
     procedure PrintErrors;
+    // On/off comments skip mode
+    procedure SkipCommentsOn;
+    procedure SkipCommentsOff;
     property scanner: TBaseScanner read FScanner;
     property errors: TErrors read FErrors;
   end;
@@ -689,6 +693,16 @@ begin
   if errDist >= minErrDist then
     errors.SemErr(s, t.line, t.col);
   errDist := 0;
+end;
+
+procedure TBaseParser.SkipCommentsOn;
+begin
+  scanner.skipComments := True;
+end;
+
+procedure TBaseParser.SkipCommentsOff;
+begin
+  scanner.skipComments := False;
 end;
 
 function TBaseParser.StartOf(s: Integer): Boolean;

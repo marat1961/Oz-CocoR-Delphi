@@ -1,3 +1,4 @@
+
 unit Oz.Cocor.Parser;
 
 interface
@@ -15,6 +16,13 @@ type
   const
     id = 0;
     str = 1;
+    _EOFSym = 0;
+    _identSym = 1;
+    _numberSym = 2;
+    _stringSym = 3;
+    _charSym = 4;
+    _ddtSym = 45;
+    _optionSym = 46;
   private
     FTraceStream: TMemoryStream;
     genScanner: Boolean;
@@ -126,9 +134,9 @@ begin
       Inc(errDist);
       break;
     end;
-    if la.kind = 44 then
-      Options.SetDDT(la.val);
     if la.kind = 45 then
+      Options.SetDDT(la.val);
+    if la.kind = 46 then
       Options.SetOption(la.val);
     la := t;
   until False;
@@ -231,7 +239,7 @@ begin
   end;
   while not ((la.kind = 0) or (la.kind = 17)) do
   begin
-    SynErr(44); Get;
+    SynErr(45); Get;
   end;
   Expect(17);
   if genScanner then
@@ -356,7 +364,7 @@ begin
   tokenString := '';
   while not (StartOf(5)) do
   begin
-    SynErr(45); Get;
+    SynErr(46); Get;
   end;
   if la.kind = 18 then
   begin
@@ -385,7 +393,7 @@ begin
       dfa.MatchLiteral(sym.name, sym);
   end
   else
-    SynErr(46);
+    SynErr(47);
   if la.kind = 41 then
   begin
     _SemText(sym.semPos);
@@ -412,7 +420,7 @@ begin
     Dfa.FixString(s);
   end
   else
-    SynErr(47);
+    SynErr(48);
   tab.NewName(name, s);
   Expect(19);
 end;
@@ -482,16 +490,21 @@ begin
       sym.attrPos.Update(t, 0);
   end
   else
-    SynErr(48);
+    SynErr(49);
 end;
 
 procedure TcrParser._SemText(var pos: TPosition);
 begin
   Expect(41);
   pos.Start(la);
+  SkipCommentsOn;
   while StartOf(11) do
   begin
     if StartOf(12) then
+    begin
+      Get;
+    end
+    else if la.kind = 42 then
     begin
       Get;
     end
@@ -501,7 +514,8 @@ begin
       SemErr('missing end of previous semantic action');
     end;
   end;
-  Expect(42);
+  SkipCommentsOff;
+  Expect(43);
   pos.Update(t);
 end;
 
@@ -563,7 +577,7 @@ begin
     s := tab.NewCharSet; s.Fill;
   end
   else
-    SynErr(49);
+    SynErr(50);
 end;
 
 procedure TcrParser._Char(var n: Integer);
@@ -598,7 +612,7 @@ begin
       SemErr(msg);
   end
   else
-    SynErr(50);
+    SynErr(51);
   if dfa.ignoreCase and Between(char(n), 'A', 'Z') then
     Inc(n, 32);
 end;
@@ -629,7 +643,7 @@ begin
       SemErr('literal tokens must not contain blanks');
   end
   else
-    SynErr(51);
+    SynErr(52);
 end;
 
 procedure TcrParser._Term(var g: TGraph);
@@ -660,7 +674,7 @@ begin
     g := tab.NewGraph(tab.NewNode(TNodeKind.eps, nil, 0));
   end
   else
-    SynErr(52);
+    SynErr(53);
   if g = nil then
     // invalid start of Term
     g := tab.NewGraph(tab.NewNode(TNodeKind.eps, nil, 0));
@@ -772,7 +786,7 @@ begin
       g := tab.NewGraph(p);
     end;
     else
-      SynErr(53);
+      SynErr(54);
   end;
   if g = nil then
     // invalid start of Factor
@@ -806,7 +820,7 @@ begin
       p.pos.Update(t);
   end
   else
-    SynErr(54);
+    SynErr(55);
 end;
 
 procedure TcrParser._Condition;
@@ -896,7 +910,7 @@ begin
     tab.MakeIteration(g); tokenString := noString;
   end
   else
-    SynErr(55);
+    SynErr(56);
   if g = nil then
     // invalid start of TokenFactor
     g := tab.NewGraph(tab.NewNode(TNodeKind.eps, nil, 0));
@@ -915,33 +929,33 @@ function TcrParser.Starts(s, kind: Integer): Boolean;
 const
   x = false;
   T = true;
-  sets: array [0..18] of array [0..44] of Boolean = (
-    (T,T,x,T, T,x,x,x, x,x,T,T, T,x,x,x, T,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x),
-    (x,T,T,T, T,x,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, x),
-    (x,T,T,T, T,T,x,x, x,x,x,x, x,T,T,T, x,x,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, x),
-    (T,T,x,T, T,x,x,x, x,x,T,T, T,x,x,x, T,T,T,T, x,x,x,x, T,x,T,x, x,x,x,x, T,T,T,x, T,x,T,T, x,T,x,x, x),
-    (T,T,x,T, T,x,x,x, x,x,T,T, T,x,x,x, T,T,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x),
-    (T,T,x,T, T,x,x,x, x,x,T,T, T,x,x,x, T,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x),
-    (x,T,x,T, T,x,x,x, x,x,T,T, T,x,x,x, T,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x),
-    (x,T,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,T,x, T,x,x,x, x,x,x,x, x),
-    (x,x,x,x, x,x,x,x, x,x,x,x, T,x,T,T, T,T,x,T, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,T, x,T,x,x, x,x,x,x, x),
-    (x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,x,T,T, T,T,T,T, T,T,T,T, T,T,T,T, x),
-    (x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,x, T,T,T,T, T,T,T,T, T,T,T,T, x),
-    (x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,x,T, x),
-    (x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,x,x,T, x),
-    (x,T,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, T,x,T,T, x,x,x,x, T,T,T,T, T,T,T,T, x,T,x,x, x),
-    (x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,T, x,T,x,x, x,x,x,x, x),
-    (x,T,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,T,x, x,x,x,x, x,T,T,x, T,x,T,T, x,T,x,x, x),
-    (x,T,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,T,x, x,x,x,x, x,T,T,x, T,x,T,x, x,T,x,x, x),
-    (x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,T, x,x,x,x, T,x,x,T, x,T,x,x, x,x,x,x, x),
-    (x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,x, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, x));
+  sets: array [0..18] of array [0..45] of Boolean = (
+    (T,T,x,T, T,x,x,x, x,x,T,T, T,x,x,x, T,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x),
+    (x,T,T,T, T,x,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,x),
+    (x,T,T,T, T,T,x,x, x,x,x,x, x,T,T,T, x,x,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,x),
+    (T,T,x,T, T,x,x,x, x,x,T,T, T,x,x,x, T,T,T,T, x,x,x,x, T,x,T,x, x,x,x,x, T,T,T,x, T,x,T,T, x,T,x,x, x,x),
+    (T,T,x,T, T,x,x,x, x,x,T,T, T,x,x,x, T,T,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x),
+    (T,T,x,T, T,x,x,x, x,x,T,T, T,x,x,x, T,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x),
+    (x,T,x,T, T,x,x,x, x,x,T,T, T,x,x,x, T,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x),
+    (x,T,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,T,x, T,x,x,x, x,x,x,x, x,x),
+    (x,x,x,x, x,x,x,x, x,x,x,x, T,x,T,T, T,T,x,T, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,T, x,T,x,x, x,x,x,x, x,x),
+    (x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,x,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,x),
+    (x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,x, T,T,T,T, T,T,T,T, T,T,T,T, T,x),
+    (x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,x, T,x),
+    (x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,x,x,x, T,x),
+    (x,T,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, T,x,T,T, x,x,x,x, T,T,T,T, T,T,T,T, x,T,x,x, x,x),
+    (x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,T, x,T,x,x, x,x,x,x, x,x),
+    (x,T,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,T,x, x,x,x,x, x,T,T,x, T,x,T,T, x,T,x,x, x,x),
+    (x,T,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,T,x, x,x,x,x, x,T,T,x, T,x,T,x, x,T,x,x, x,x),
+    (x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,T, x,x,x,x, T,x,x,T, x,T,x,x, x,x,x,x, x,x),
+    (x,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,x, T,T,T,T, T,T,T,T, T,T,T,T, T,T,T,T, T,x));
 begin
   Result := sets[s, kind];
 end;
 
 function TcrParser.ErrorMsg(nr: Integer): string;
 const
-  MaxErr = 55;
+  MaxErr = 56;
   Errors: array [0 .. MaxErr] of string = (
     {0} 'EOF expected',
     {1} 'ident expected',
@@ -985,20 +999,21 @@ const
     {39} '"IF" expected',
     {40} '"CONTEXT" expected',
     {41} '"(." expected',
-    {42} '".)" expected',
-    {43} '??? expected',
-    {44} 'this symbol not expected in Coco',
-    {45} 'this symbol not expected in TokenDecl',
-    {46} 'invalid TokenDecl',
-    {47} 'invalid NameDecl',
-    {48} 'invalid AttrDecl',
-    {49} 'invalid SimSet',
-    {50} 'invalid Char',
-    {51} 'invalid Sym_',
-    {52} 'invalid Term',
-    {53} 'invalid Factor',
-    {54} 'invalid Attribs',
-    {55} 'invalid TokenFactor');
+    {42} '"//" expected',
+    {43} '".)" expected',
+    {44} '??? expected',
+    {45} 'this symbol not expected in Coco',
+    {46} 'this symbol not expected in TokenDecl',
+    {47} 'invalid TokenDecl',
+    {48} 'invalid NameDecl',
+    {49} 'invalid AttrDecl',
+    {50} 'invalid SimSet',
+    {51} 'invalid Char',
+    {52} 'invalid Sym_',
+    {53} 'invalid Term',
+    {54} 'invalid Factor',
+    {55} 'invalid Attribs',
+    {56} 'invalid TokenFactor');
 begin
   if nr <= MaxErr then
     Result := Errors[nr]

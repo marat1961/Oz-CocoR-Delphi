@@ -471,11 +471,11 @@ Attribs<p: TNode>
 
 SemText<var pos: TPosition>
 =
-  "(."                         (. pos.Start(la); .)
+  "(."                         (. pos.Start(la); SkipCommentsOn; .)
   { ANY
   | "(."                       (. SemErr('missing end of previous semantic action'); .)
   }
-  ".)"                         (. pos.Update(t); .)
+  ".)"                         (. pos.Update(t); SkipCommentsOff; .)
 .
 
 /*------------------------------------------------------------------------------------*/

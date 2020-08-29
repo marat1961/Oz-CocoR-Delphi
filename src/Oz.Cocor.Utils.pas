@@ -66,7 +66,7 @@ type
     function Intersects(s: TBitSet): Boolean;
     // dest := self
     function Clone: TBitSet;
-    // The union of two sets.  self := self + s
+    // The union of two sets. self := self + s
     procedure Unite(s: TBitSet);
     // The intersection of two sets. self := self * s
     procedure Intersect(s: TBitSet);
@@ -219,7 +219,8 @@ begin
 end;
 
 procedure TBitsBuffer.AssignTo(var dest: TBitsBuffer);
-var msz: Integer;
+var
+  msz: Integer;
 begin
   Assert(Size = dest.Size);
   msz := CalcMemorySize(Size);
@@ -275,7 +276,8 @@ begin
 end;
 
 procedure TBitsBuffer.SetAll(b: Boolean);
-var msz: Integer;
+var
+  msz: Integer;
 begin
   msz := CalcMemorySize(Size);
   FillChar(Buf^, msz, Fill[b]);
