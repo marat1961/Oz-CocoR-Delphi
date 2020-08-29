@@ -455,7 +455,7 @@ Sym_<var name: string; var kind: Integer>
 
 /*------------------------------------------------------------------------------------*/
 
-Attribs<p: TNode>
+Attribs<p: TNode>              
 =
   '<'                          (. p.pos.Start(la); .)
   { ANY }
@@ -470,8 +470,8 @@ Attribs<p: TNode>
 /*------------------------------------------------------------------------------------*/
 
 SemText<var pos: TPosition>
-=
-  "(."                         (. pos.Start(la); SkipCommentsOn; .)
+=                              (. SkipCommentsOn; .)
+  "(."                         (. pos.Start(la); .)
   { ANY
   | "(."                       (. SemErr('missing end of previous semantic action'); .)
   }
