@@ -111,6 +111,7 @@ type
   TMacroDef = class
     name, stuff: string;
   end;
+
   // token name declaration
   TNameDecl = class
     name, definition: string;
@@ -396,7 +397,8 @@ begin
 end;
 
 function TTab.FindSym(const name: string): TSymbol;
-var s: TSymbol;
+var
+  s: TSymbol;
 begin
   for s in terminals do
     if s.name = name then exit(s);
@@ -483,7 +485,8 @@ begin
 end;
 
 function TTab.NewNode(typ: TNodeKind; sym: TSymbol; line: Integer): TNode;
-var r: TNode;
+var
+  r: TNode;
 begin
   r := TNode.Create(typ, sym, line);
   r.n := nodes.Count;
@@ -492,7 +495,8 @@ begin
 end;
 
 function TTab.NewNode(typ: TNodeKind; sub: TNode): TNode;
-var r: TNode;
+var
+  r: TNode;
 begin
   r := NewNode(typ, nil, 0);
   r.sub := sub;
@@ -500,7 +504,8 @@ begin
 end;
 
 function TTab.NewNode(typ: TNodeKind; val, line: Integer): TNode;
-var r: TNode;
+var
+  r: TNode;
 begin
   r := NewNode(typ, nil, line);
   r.val := val;
@@ -517,7 +522,8 @@ begin
 end;
 
 procedure TTab.MakeAlternative(g1, g2: TGraph);
-var p: TNode;
+var
+  p: TNode;
 begin
   g2.l := NewNode(TNodeKind.alt, g2.l); g2.l.line := g2.l.sub.line;
   g2.l.up := true;
@@ -534,7 +540,8 @@ begin
 end;
 
 procedure TTab.MakeSequence(g1, g2: TGraph);
-var p, q: TNode;
+var
+  p, q: TNode;
 begin
   p := g1.r.next; g1.r.next := g2.l; // link head node
   while p <> nil do
@@ -547,7 +554,8 @@ begin
 end;
 
 procedure TTab.MakeIteration(g: TGraph);
-var p, q: TNode;
+var
+  p, q: TNode;
 begin
   g.l := NewNode(TNodeKind.iter, g.l);
   g.r.up := true;
@@ -569,7 +577,8 @@ begin
 end;
 
 procedure TTab.Finish(g: TGraph);
-var p, q: TNode;
+var
+  p, q: TNode;
 begin
   p := g.r;
   while p <> nil do
@@ -941,7 +950,8 @@ begin
 end;
 
 procedure TTab.CompFollowSets;
-var sym: TSymbol;
+var
+  sym: TSymbol;
 begin
   for sym in nonterminals do
   begin
