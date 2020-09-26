@@ -10,20 +10,32 @@ Thus the class of accepted grammars is LL(k) for an arbitrary k.
 
 Why this project appeared
 --------------------------
-I have been using the turbo pascal version for a long time.
+I've been using the turbo pascal version of Coco / R for a long time.
 Sometimes it was necessary to change the code.
 If the sources changed, I recompiled it.
-But after some Windows update, I found
-that Turbo Pascal ordered to live a long time and stopped running.
-In general, it seems to me that there is some conspiracy against the languages
-from Niklaus Wirth. I don't understand where this hatred comes from.
+But after some Windows update, I found that Turbo Pascal ordered to live a long 
+time and stopped running.
 
+In general, I believe that there are few such people who have made a comparable contribution to the development of programming and computer science languages.
+
+It is easy to find a complex and often incomprehensible solution to a problem. 
+It is difficult to make a simple, clean and understandable solution.
+
+When you see such a decision, it becomes clear that this is the work of the Master with a capital letter.
 First, I ported the code from Turbo Pascal. But I discovered that in almost 20 years
-a lot of water has flowed under the bridge and the COCO/R code has also been improved well.
-The most important improvement I consider to be the resolution option is LL (k).
-The utf-8 support is also very helpful.
+a lot of water has flowed under the bridge and the COCO / R code has also been improved well.
 
 The last version I found was C ++, C #, Java.
 Then I decided to port the code and chose C #.
 In spirit, this is the language closest to Delphi,
 probably due to the fact that they have one chief architect.
+
+1. The most important improvements in my opinion are the support for LL (k) grammar.
+2. The utf-8 support is also very useful.
+3. Great attention is paid to the good quality of the generated code.
+4. Also attention was paid to the separate CocoLib library.
+I developed this library when I was using the Turo Pascal version.
+I usually always include it unchanged in my projects.
+using Coco / r.
+
+You can see an example of use in the protobuf-delphi project.
