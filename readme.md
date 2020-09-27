@@ -13,8 +13,8 @@ Why this project appeared
 I've been using the turbo pascal version of Coco / R for a long time.
 Sometimes it was necessary to change the code.
 If the sources changed, I recompiled it.
-But after some Windows update, I found that Turbo Pascal ordered to live a long 
-time and stopped running.
+But after some Windows update, I found that Turbo Pascal go to a better place and stopped running. 
+In general, I think many people's languages from Niklaus Emil Wirth cause dislike.
 
 In general, I believe that there are few such people who have made a comparable contribution to the development of programming and computer science languages.
 
