@@ -23,7 +23,7 @@ It is difficult to make a simple, clean and understandable solution.
 
 When you see such a decision, it becomes clear that this is the work of the Master with a capital letter.
 First, I ported the code from Turbo Pascal. But I discovered that in almost 20 years
-a lot of water has flowed under the bridge and the COCO / R code has also been improved well.
+a lot of water has flowed under the bridge and the COCO/R code has also been improved well.
 
 The last version I found was C ++, C #, Java.
 Then I decided to port the code and chose C #.
@@ -33,8 +33,8 @@ probably due to the fact that they have one chief architect.
 1. The most important improvements in my opinion are the support for LL (k) grammar.
 2. The utf-8 support is also very useful.
 3. Great attention is paid to the good quality of the generated code.
-4. Also attention was paid to the separate CocoLib library.
-I developed this library when I was using the Turo Pascal version.
+4. Also attention was paid to the separate CocoLib unit.
+I developed this library when I was using the Turbo Pascal version.
 I usually always include it unchanged in my projects.
 using Coco / r.
 
