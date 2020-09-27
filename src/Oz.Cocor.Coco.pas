@@ -1,6 +1,7 @@
 unit Oz.Cocor.Coco;
-// Compiler Generator Coco/R, for Delphi
-// Copyright (c) 2020 Tomsk, Marat Shaimardanov
+
+(* Compiler Generator Coco/R, for Delphi        *)
+(* Copyright (c) 2020 Tomsk, Marat Shaimardanov *)
 
 (* Compiler Generator Coco/R, C# version
 Copyright (c) 1990, 2004 Hanspeter Moessenboeck, University of Linz
@@ -110,4 +111,5 @@ begin
 end;
 
 end.
+
 

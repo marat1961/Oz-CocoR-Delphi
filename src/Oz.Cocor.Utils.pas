@@ -1,6 +1,6 @@
 unit Oz.Cocor.Utils;
-// Compiler Generator Coco/R, for Delphi
-// Copyright (c) 2020 Tomsk, Marat Shaimardanov
+(* Compiler Generator Coco/R, for Delphi        *)
+(* Copyright (c) 2020 Tomsk, Marat Shaimardanov *)
 
 interface
 
