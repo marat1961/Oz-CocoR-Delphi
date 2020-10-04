@@ -1,6 +1,11 @@
+(* Compiler Generator Coco/R, for Delphi
+ * Copyright (c) 2001-2020, Marat Shaimardanov
+ *
+ * This file is only permitted to be used as part of Coco/R for Delphi
+ * generated code and is not covered by the GNU General Public License.
+*)
+
 unit Oz.Cocor.Lib;
-// Compiler Generator Coco/R, for Delphi
-// Copyright (c) 2020 Tomsk, Marat Shaimardanov
 
 interface
 
