@@ -123,6 +123,7 @@ type
     destructor Destroy; override;
     procedure Incl(ch: Char); overload;
     procedure Incl(i: Integer); overload;
+    procedure InclRange(lo, hi: Integer);
     function Equals(s: TCharSet): Boolean; reintroduce;
     function Elements: Integer;
     function First: Integer;
@@ -497,6 +498,15 @@ end;
 procedure TCharSet.Incl(i: Integer);
 begin
   Include(head, i);
+end;
+
+procedure TCharSet.InclRange(lo, hi: Integer);
+begin
+  Assert(lo <= hi);
+  repeat
+    Include(head, lo);
+    Inc(lo);
+  until lo > hi;
 end;
 
 function TCharSet.Clone: TCharSet;

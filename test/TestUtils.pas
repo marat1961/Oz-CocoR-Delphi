@@ -26,6 +26,7 @@ interface
 uses
   TestFramework,
   System.Classes,
+  System.Math,
   System.Generics.Collections,
   oz.cocor.Utils;
 
@@ -60,6 +61,7 @@ type
   published
     procedure TestIncl;
     procedure TestIncl1;
+    procedure TestInclRange;
     procedure TestEquals;
     procedure TestElements;
     procedure TestFirst;
@@ -282,6 +284,75 @@ begin
   begin
     b := FCharSet.Items[i];
     Check(b = (ch = i))
+  end;
+end;
+
+procedure TestTCharSet.TestInclRange;
+var
+  i: Integer;
+  b: Boolean;
+begin
+  FCharSet.InclRange(50, 80);
+  for i := 0 to 255 do
+  begin
+    b := FCharSet.Items[i];
+    Check(b = InRange(i, 50, 80))
+  end;
+  // add elements to the left
+  FCharSet.InclRange(40, 60);
+  for i := 0 to 255 do
+  begin
+    b := FCharSet.Items[i];
+    Check(b = InRange(i, 40, 80))
+  end;
+  // add elements to the right
+  FCharSet.InclRange(75, 90);
+  for i := 0 to 255 do
+  begin
+    b := FCharSet.Items[i];
+    Check(b = InRange(i, 40, 90))
+  end;
+  // add elements in the middle
+  FCharSet.InclRange(55, 70);
+  for i := 0 to 255 do
+  begin
+    b := FCharSet.Items[i];
+    Check(b = InRange(i, 40, 90))
+  end;
+  //  add non-intersecting elements
+  FCharSet.InclRange(100, 105);
+  for i := 0 to 255 do
+  begin
+    b := FCharSet.Items[i];
+    Check(b = (InRange(i, 40, 90) or (InRange(i, 100, 105))));
+  end;
+  //  add one item to the left
+  FCharSet.InclRange(39, 39);
+  for i := 0 to 255 do
+  begin
+    b := FCharSet.Items[i];
+    Check(b = (InRange(i, 39, 90) or (InRange(i, 100, 105))));
+  end;
+  //  add one item to the right
+  FCharSet.InclRange(91, 91);
+  for i := 0 to 255 do
+  begin
+    b := FCharSet.Items[i];
+    Check(b = (InRange(i, 39, 91) or (InRange(i, 100, 105))));
+  end;
+  //  add one item to the left
+  FCharSet.InclRange(99, 99);
+  for i := 0 to 255 do
+  begin
+    b := FCharSet.Items[i];
+    Check(b = (InRange(i, 39, 91) or (InRange(i, 99, 105))));
+  end;
+  //  add one item to the right
+  FCharSet.InclRange(106, 106);
+  for i := 0 to 255 do
+  begin
+    b := FCharSet.Items[i];
+    Check(b = (InRange(i, 39, 91) or (InRange(i, 99, 106))));
   end;
 end;
 
