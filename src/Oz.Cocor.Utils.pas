@@ -483,7 +483,7 @@ begin
     if i < p.lo then
       exit(false)
     else if i <= p.hi then
-      // p.lo <= i <= p.to
+      // p.lo <= i <= p.hi
       exit(true);
     p := p.next;
   end;
