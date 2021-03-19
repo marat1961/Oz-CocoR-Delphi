@@ -3,7 +3,7 @@ unit Taste.Gen;
 interface
 
 uses
-  System.SysUtils;
+  System.Classes, System.SysUtils;
 
 type
 
@@ -23,6 +23,9 @@ type
     function Next: Integer;
     function Next2: Integer;
     function Int(b: Boolean): Integer;
+    procedure Push(val: Integer);
+    function Pop: Integer;
+    function ReadInt(s: TFileStream): Integer;
   public
     // address of first instruction of main program
     progStart: Integer;
@@ -115,10 +118,14 @@ begin
 end;
 
 function TCodeGenerator.Next2: Integer;
+var
+  x, y: Integer;
 begin
-  Integer x,y;
-  x = (sbyte)code[pc++]; y = code[pc++];
-  Result :=  (x << 8) + y;
+  x := code[pc];
+  Inc(pc);
+  y := code[pc];
+  Inc(pc);
+  Result := (x shl 8) + y;
 end;
 
 function TCodeGenerator.Int(b: Boolean): Integer;
@@ -129,69 +136,125 @@ begin
     Result := 0;
 end;
 
-procedure TCodeGenerator.Push(Integer val);
+procedure TCodeGenerator.Push(val: Integer);
 begin
-  stack[sp++] = val;
+  stack[sp] := val;
+  Inc(sp)
 end;
 
-Integer TCodeGenerator.Pop;
+function TCodeGenerator.Pop: Integer;
 begin
-  Result :=  stack[--sp];
+  Dec(sp);
+  Result := stack[sp];
 end;
 
-Integer TCodeGenerator.ReadInt(FileStream s);
+function TCodeGenerator.ReadInt(s: TFileStream): Integer;
+var
+  ch: AnsiChar;
+  sign, n: Integer;
 begin
-  Integer ch, sign;
-  do beginch = s.ReadByte();end; while (!(ch >= '0' && ch <= '9' || ch == '-'));
-  if (ch == '-') beginsign = -1; ch = s.ReadByte();end; else sign = 1;
-  Integer n = 0;
-  while (ch >= '0' && ch <= '9') begin
-    n = 10 * n + (ch - '0');
-    ch = s.ReadByte();
+  repeat
+    s.Read(ch, 1);
+  until ch in ['0', '9', '-'];
+  if ch = '-' then
+  begin
+    sign := -1;
+    s.Read(ch, 1);
+  end
+  else
+    sign := 1;
+  n := 0;
+  while ch in ['0', '9'] do
+  begin
+    n := 10 * n + (Ord(ch) - Ord('0'));
+    s.Read(ch, 1);
   end;
-  Result :=  n * sign;
+  Result := n * sign;
 end;
 
 procedure TCodeGenerator.Interpret(data: string);
+var
+  val: Integer;
+  s: TFileStream;
 begin
-  Integer val;
-  try begin
-    FileStream s = new FileStream(data, FileMode.Open);
-    Console.WriteLine();
-    pc = progStart; stack[0] = 0; sp = 1; bp = 0;
-    for (;;) begin
-      switch ((TOp)Next()) begin
-        case TOp.CONST: Push(Next2()); break;
-        case TOp.LOAD:  Push(stack[bp+Next2()]); break;
-        case TOp.LOADG: Push(globals[Next2()]); break;
-        case TOp.STO:   stack[bp+Next2()] = Pop(); break;
-        case TOp.STOG:  globals[Next2()] = Pop(); break;
-        case TOp.ADD:   Push(Pop()+Pop()); break;
-        case TOp.SUB:   Push(-Pop()+Pop()); break;
-        case TOp.DIV:   val = Pop(); Push(Pop()/val); break;
-        case TOp.MUL:   Push(Pop()*Pop()); break;
-        case TOp.NEG:   Push(-Pop()); break;
-        case TOp.EQU:   Push(Int(Pop()==Pop())); break;
-        case TOp.LSS:   Push(Int(Pop()>Pop())); break;
-        case TOp.GTR:   Push(Int(Pop()<Pop())); break;
-        case TOp.JMP:   pc = Next2(); break;
-        case TOp.FJMP:  val = Next2(); if (Pop()==0) pc = val; break;
-        case TOp.READ:  val = ReadInt(s); Push(val); break;
-        case TOp.WRITE: Console.WriteLine(Pop()); break;
-        case TOp.CALL:  Push(pc+2); pc = Next2(); break;
-        case TOp.RET:
-           pc = Pop();
-          if (pc == 0) Result := ; break;
-        case TOp.ENTER: Push(bp); bp = sp; sp = sp + Next2(); break;
-        case TOp.LEAVE: sp = bp; bp = Pop(); break;
-        default:    throw new Exception('illegal opcode');
-      end;
+  s := TFileStream.Create(data, fmOpenRead);
+  Writeln;
+  pc := progStart;
+  stack[0] := 0;
+  sp := 1;
+  bp := 0;
+  repeat
+    case TOp(Next) of
+      TOp.opCONST:
+        Push(Next2);
+      TOp.LOAD:
+        Push(stack[bp + Next2]);
+      TOp.LOADG:
+        Push(globals[Next2]);
+      TOp.STO:
+        stack[bp + Next2] := Pop;
+      TOp.STOG:
+        globals[Next2] := Pop;
+      TOp.ADD:
+        Push(Pop + Pop);
+      TOp.SUB:
+        Push(-Pop + Pop);
+      TOp.opDIV:
+        begin
+          val := Pop;
+          Push(Pop div val);
+        end;
+      TOp.MUL:
+        Push(Pop * Pop);
+      TOp.NEG:
+        Push(-Pop);
+      TOp.EQU:
+        Push(Int(Pop =Pop));
+      TOp.LSS:
+        Push(Int(Pop > Pop));
+      TOp.GTR:
+        Push(Int(Pop < Pop));
+      TOp.JMP:
+        pc := Next2;
+      TOp.FJMP:
+        begin
+          val := Next2;
+          if Pop = 0 then
+            pc := val;
+        end;
+      TOp.READ:
+        begin
+          val := ReadInt(s);
+          Push(val);
+        end;
+      TOp.WRITE:
+        Writeln(Pop);
+      TOp.CALL:
+        begin
+          Push(pc + 2);
+          pc := Next2;
+        end;
+      TOp.RET:
+        begin
+          pc := Pop;
+          if pc = 0 then exit;
+        end;
+      TOp.ENTER:
+        begin
+          Push(bp);
+          bp := sp;
+          sp := sp + Next2;
+        end;
+      TOp.LEAVE:
+        begin
+          sp := bp;
+          bp := Pop;
+        end;
+      else
+        raise Exception.Create('illegal opcode');
     end;
-  end; catch (IOException) begin
-    Console.WriteLine('--- Error accessing file begin0end;', data);
-    System.Environment.Exit(0);
-  end;
+  until False;
 end;
 
-end;
+end.
 
