@@ -133,6 +133,8 @@
         <DCCReference Include="Taste.Parser.pas"/>
         <DCCReference Include="Taste.Scanner.pas"/>
         <DCCReference Include="Taste.Tab.pas"/>
+        <DCCReference Include="..\src\Oz.Cocor.Lib.pas"/>
+        <DCCReference Include="..\src\Oz.Cocor.Utils.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

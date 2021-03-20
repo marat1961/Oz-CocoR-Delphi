@@ -9,7 +9,9 @@ uses
   Taste.Gen in 'Taste.Gen.pas',
   Taste.Parser in 'Taste.Parser.pas',
   Taste.Scanner in 'Taste.Scanner.pas',
-  Taste.Tab in 'Taste.Tab.pas';
+  Taste.Tab in 'Taste.Tab.pas',
+  Oz.Cocor.Lib in '..\src\Oz.Cocor.Lib.pas',
+  Oz.Cocor.Utils in '..\src\Oz.Cocor.Utils.pas';
 
 begin
   try
