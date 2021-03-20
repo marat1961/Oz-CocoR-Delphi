@@ -29,7 +29,7 @@ Expr<var typ: Integer>       (. var
                                   op: TOp; .)
 = SimExpr<typ>
 [ RelOp<op>
-SimExpr<typ1>                (. if typ <> typ1 then SemErr('incompatible types');
+SimExpr<typ1>                (. if typ <> typ1 then Error('incompatible types');
                                 gen.Emit(op);
                                 typ := boolean; .)
 ].
@@ -48,13 +48,13 @@ Factor<var typ: Integer>     (. var
                                   else
                                     gen.Emit(TOp.LOAD, obj.adr);
                                 end else
-                                  SemErr('variable expected'); .)
+                                  Error('variable expected'); .)
 | number                     (. n := Convert.ToInt32(t.val);
                                 gen.Emit(TOp.CONST, n);
                                 typ := integer; .)
 | '-' Factor<typ>            (. if typ <> integer then
                                 begin
-                                  SemErr('integer type expected');
+                                  Error('integer type expected');
                                   typ := integer;
                                 end;
                                 gen.Emit(TOp.NEG); .)
@@ -108,7 +108,7 @@ SimExpr<var typ: Integer>    (. var
 Term<typ>
 { AddOp<op>
   Term<typ1>                 (. if (typ <> integer) or (typ1 <> integer) then
-                                  SemErr('integer type expected');
+                                  Error('integer type expected');
                                 gen.Emit(op); .)
 }.
 
@@ -120,20 +120,20 @@ Stat                         (. var
 =
 Ident<name>                  (. obj := tab.Find(name); .)
 ( ":="                       (. if obj.kind <> var then
-                                  SemErr('cannot assign to procedure'); .)
+                                  Error('cannot assign to procedure'); .)
 Expr<typ> ';'                (. if typ <> obj.typ then
-                                  SemErr('incompatible types');
+                                  Error('incompatible types');
                                 if obj.level = 0 then
                                   gen.Emit(TOp.STOG, obj.adr)
                                 else
                                   gen.Emit(TOp.STO, obj.adr); .)
 | '(' ')' ';'                (. if obj.kind <> proc then
-                                  SemErr('object is not a procedure');
+                                  Error('object is not a procedure');
                                 gen.Emit(TOp.CALL, obj.adr); .)
 )
 | "if"
   Expr<typ> "then"          (. if typ <> boolean then
-                                  SemErr('boolean type expected');
+                                  Error('boolean type expected');
                                 gen.Emit(TOp.FJMP, 0);
                                 adr := gen.pc - 2; .)
 Stat
@@ -145,7 +145,7 @@ Stat
 
 | "while"                    (. loopstart := gen.pc; .)
   '(' Expr<typ> ')'          (. if typ <> boolean then
-                                  SemErr('boolean type expected');
+                                  Error('boolean type expected');
                                 gen.Emit(TOp.FJMP, 0);
                                 adr := gen.pc - 2; .)
   Stat                       (. gen.Emit(TOp.JMP, loopstart);
@@ -154,7 +154,7 @@ Stat
 | "read"
   Ident<name> ';'            (. obj := tab.Find(name);
                                 if obj.typ <> integer then
-                                  SemErr('integer type expected');
+                                  Error('integer type expected');
                                 gen.Emit(TOp.READ);
                                 if obj.level = 0 then
                                   gen.Emit(TOp.STOG, obj.adr)
@@ -163,7 +163,7 @@ Stat
 
 | "write"
   Expr<typ> ';'               (. if typ <> integer then
-                                   SemErr('integer type expected');
+                                   Error('integer type expected');
                                  gen.Emit(TOp.WRITE); .)
 
 | '{' { Stat | VarDecl } '}'
@@ -177,7 +177,7 @@ Taste                        (. var
   { VarDecl | ProcDecl }
   '}'                        (. tab.CloseScope;
                                 if gen.progStart = -1 then
-                                  SemErr('main function never defined'); .)
+                                  Error('main function never defined'); .)
 .
 
 Term<var typ: Integer>       (. var
@@ -187,7 +187,7 @@ Term<var typ: Integer>       (. var
 Factor<typ>
 { MulOp<op>
 Factor<typ1>                 (. if (typ <> integer) or (typ1 <> integer) then
-                                  SemErr('integer type expected');
+                                  Error('integer type expected');
                                 gen.Emit(op); .)
 }.
 
