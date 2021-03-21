@@ -3,7 +3,7 @@ unit Taste.Gen;
 interface
 
 uses
-  System.Classes, System.SysUtils;
+  System.Classes, System.SysUtils, Oz.Cocor.Utils, Oz.Cocor.Lib;
 
 type
 
@@ -13,7 +13,7 @@ type
     LOAD, LOADG, STO, STOG, opCONST,
     CALL, RET, ENTER, LEAVE, JMP, FJMP, READ, WRITE);
 
-  TCodeGenerator = class
+  TCodeGenerator = class(TCocoPart)
   const
     opcode: array [TOp] of string = (
       'ADD  ', 'SUB  ', 'MUL  ', 'DIV  ', 'EQU  ', 'LSS  ', 'GTR  ', 'NEG  ',
@@ -39,7 +39,7 @@ type
     sp: Integer;
     // base pointer
     bp: Integer;
-    constructor Create;
+    constructor Create(parser: TBaseParser);
     // code generation methods
     procedure Put(x: Integer);
     procedure Emit(op: TOp); overload;
@@ -52,7 +52,7 @@ type
 
 implementation
 
-constructor TCodeGenerator.Create;
+constructor TCodeGenerator.Create(parser: TBaseParser);
 begin
   inherited;
   SetLength(code, 3000);
