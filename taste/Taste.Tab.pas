@@ -1,5 +1,135 @@
-unit Taste.Tab;interfaceuses
+unit Taste.Tab;
+interface
+
+uses
   Oz.Cocor.Utils, Oz.Cocor.Lib;
-type
-  // object describing a declared name  TObj = class    name: string;      // name of the object    typ: Integer;      // type of the object (undef for proc)    next: TObj;        // to next object in same scope    kind: Integer;     // var, proc, scope    adr: Integer;      // address in memory or start of proc    level: Integer;    // nesting level; 0=global, 1=local    locals: TObj;      // scopes: to locally declared objects    nextAdr: Integer;  // scopes: next free address in this scope  end;  TSymbolTable = class(TCocoPart)  const    // types    undef = 0;    int = 1;    bool = 2;    // object kinds    variable = 0;    proc = 1;    scope = 2;  public    curLevel: Integer;  // nesting level of current scope    undefObj: TObj;     // object node for erroneous symbols    topScope: TObj;     // topmost procedure scope    constructor Create(parser: TBaseParser);    // open a new scope and make it the current scope (topScope)    procedure OpenScope;    // close the current scope    procedure CloseScope;    // create a new object node in the current scope    function NewObj(const name: string; kind, typ: Integer): TObj;    // search the name in all open scopes and return its object node    function Find(const name: string): TObj;  end;implementationuses  Taste.Parser;
-constructor TSymbolTable.Create(parser: TBaseParser);begin  Self.parser := parser;  topScope := nil;  curLevel := -1;  undefObj := TObj.Create;  undefObj.name := 'undef';  undefObj.typ := undef;  undefObj.kind := variable;  undefObj.adr := 0;  undefObj.level := 0;  undefObj.next := nil;end;procedure TSymbolTable.OpenScope;var  scop: TObj;begin  scop := TObj.Create;  scop.name := '';  scop.kind := scope;  scop.locals := nil;  scop.nextAdr := 0;  scop.next := topScope;  topScope := scop;  Inc(curLevel);end;procedure TSymbolTable.CloseScope;begin  topScope := topScope.next;  Dec(curLevel);end;function TSymbolTable.NewObj(const name: string; kind, typ: Integer): TObj;var  p, last, obj: TObj;begin  obj := TObj.Create;  obj.name := name;  obj.kind := kind;  obj.typ := typ;  obj.level := curLevel;  p := topScope.locals;  last := nil;  while p <> nil do  begin    if p.name = name then      parser.Error('name declared twice');    last := p;    p := p.next;  end;  if last = nil then    topScope.locals := obj  else    last.next := obj;  if kind = variable then  begin    obj.adr := topScope.nextAdr;    Inc(topScope.nextAdr);  end;  Result := obj;end;function TSymbolTable.Find(const name: string): TObj;var  obj, scope: TObj;begin  scope := topScope;  while scope <> nil do  begin    // for all open scopes    obj := scope.locals;    while obj <> nil do    begin      // for all objects in this scope      if obj.name = name then exit(obj);      obj := obj.next;    end;    scope := scope.next;  end;  parser.Error(name + ' is undeclared');  Result := undefObj;end;end.
+
+type
+
+  // type
+  TType = (undef, int, bool);
+
+  // object kind
+  TObjectKind = (variable, proc, scope);
+
+  // object describing a declared name
+  TObj = class
+    name: string;      // name of the object
+    typ: TType;        // type of the object (undef for proc)
+    next: TObj;        // to next object in same scope
+    kind: TObjectKind; // variable, proc, scope
+    adr: Integer;      // address in memory or start of proc
+    level: Integer;    // nesting level; 0=global, 1=local
+    locals: TObj;      // scopes: to locally declared objects
+    nextAdr: Integer;  // scopes: next free address in this scope
+  end;
+
+  TSymbolTable = class(TCocoPart)
+  var
+    curLevel: Integer;  // nesting level of current scope
+    undefObj: TObj;     // object node for erroneous symbols
+    topScope: TObj;     // topmost procedure scope
+  public
+    constructor Create(parser: TBaseParser);
+    // open a new scope and make it the current scope (topScope)
+    procedure OpenScope;
+    // close the current scope
+    procedure CloseScope;
+    // create a new object node in the current scope
+    function NewObj(const name: string; kind: TObjectKind; typ: TType): TObj;
+    // search the name in all open scopes and return its object node
+    function Find(const name: string): TObj;
+  end;
+
+implementation
+
+uses
+  Taste.Parser;
+
+constructor TSymbolTable.Create(parser: TBaseParser);
+begin
+  inherited;
+  topScope := nil;
+  curLevel := -1;
+  undefObj := TObj.Create;
+  undefObj.name := 'undef';
+  undefObj.typ := undef;
+  undefObj.kind := variable;
+  undefObj.adr := 0;
+  undefObj.level := 0;
+  undefObj.next := nil;
+end;
+
+procedure TSymbolTable.OpenScope;
+var
+  scop: TObj;
+begin
+  scop := TObj.Create;
+  scop.name := '';
+  scop.kind := scope;
+  scop.locals := nil;
+  scop.nextAdr := 0;
+  scop.next := topScope;
+  topScope := scop;
+  Inc(curLevel);
+end;
+
+procedure TSymbolTable.CloseScope;
+begin
+  topScope := topScope.next;
+  Dec(curLevel);
+end;
+
+function TSymbolTable.NewObj(const name: string; kind: TObjectKind; typ: TType): TObj;
+var
+  p, last, obj: TObj;
+begin
+  obj := TObj.Create;
+  obj.name := name;
+  obj.kind := kind;
+  obj.typ := typ;
+  obj.level := curLevel;
+  p := topScope.locals;
+  last := nil;
+  while p <> nil do
+  begin
+    if p.name = name then
+      parser.SemErr('name declared twice');
+    last := p;
+    p := p.next;
+  end;
+  if last = nil then
+    topScope.locals := obj
+  else
+    last.next := obj;
+  if kind = variable then
+  begin
+    obj.adr := topScope.nextAdr;
+    Inc(topScope.nextAdr);
+  end;
+  Result := obj;
+end;
+
+function TSymbolTable.Find(const name: string): TObj;
+var
+  obj, scope: TObj;
+begin
+  scope := topScope;
+  while scope <> nil do
+  begin
+    // for all open scopes
+    obj := scope.locals;
+    while obj <> nil do
+    begin
+      // for all objects in this scope
+      if obj.name = name then exit(obj);
+      obj := obj.next;
+    end;
+    scope := scope.next;
+  end;
+  parser.SemErr(name + ' is undeclared');
+  Result := undefObj;
+end;
+
+end.
+

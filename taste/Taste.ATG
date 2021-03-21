@@ -24,24 +24,24 @@ AddOp<var op: TOp>
 | '-'                        (. op := TOp.SUB; .)
 ).
 
-Expr<var typ: Integer>       (. var
-                                  typ1: Integer;
+Expr<var typ: TType>         (. var
+                                  typ1: TType;
                                   op: TOp; .)
 = SimExpr<typ>
 [ RelOp<op>
 SimExpr<typ1>                (. if typ <> typ1 then SemErr('incompatible types');
                                 gen.Emit(op);
-                                typ := boolean; .)
+                                typ := TType.bool; .)
 ].
 
-Factor<var typ: Integer>     (. var
+Factor<var typ: TType>       (. var
                                   n: Integer;
-                                  obj: Obj;
+                                  obj: TObj;
                                   name: string; .)
-=                            (. typ := undef; .)
+=                            (. typ := TType.undef; .)
 ( Ident<name>                (. obj := tab.Find(name);
                                 typ := obj.typ;
-                                if obj.kind = var then
+                                if obj.kind = variable then
                                 begin
                                   if obj.level = 0 then
                                     gen.Emit(TOp.LOADG, obj.adr)
@@ -49,19 +49,19 @@ Factor<var typ: Integer>     (. var
                                     gen.Emit(TOp.LOAD, obj.adr);
                                 end else
                                   SemErr('variable expected'); .)
-| number                     (. n := Convert.ToInt32(t.val);
-                                gen.Emit(TOp.CONST, n);
-                                typ := integer; .)
-| '-' Factor<typ>            (. if typ <> integer then
+| number                     (. n := StrToInt(t.val);
+                                gen.Emit(TOp.opCONST, n);
+                                typ := TType.int; .)
+| '-' Factor<typ>            (. if typ <> TType.int then
                                 begin
-                                  SemErr('integer type expected');
-                                  typ := integer;
+                                  SemErr('TType.int type expected');
+                                  typ := TType.int;
                                 end;
                                 gen.Emit(TOp.NEG); .)
-| "true"                     (. gen.Emit(TOp.CONST, 1);
-                                typ := boolean; .)
-| "false"                    (. gen.Emit(TOp.CONST, 0);
-                                typ := boolean; .)
+| "true"                     (. gen.Emit(TOp.opCONST, 1);
+                                typ := TType.bool; .)
+| "false"                    (. gen.Emit(TOp.opCONST, 0);
+                                typ := TType.bool; .)
 ).
 
 Ident<var name: string>
@@ -80,7 +80,7 @@ ProcDecl                     (. var
                                   obj: TObj;
                                   adr: Integer; .)
 =
-"procedure" Ident<name>      (. obj := tab.NewObj(name, proc, undef);
+"procedure" Ident<name>      (. obj := tab.NewObj(name, proc, TType.undef);
                                 obj.adr := gen.pc;
                                 if name = 'Main' then
                                   gen.progStart := gen.pc;
@@ -101,25 +101,25 @@ RelOp<var op: TOp>
   | '>'                      (. op := TOp.GTR; .)
   ).
 
-SimExpr<var typ: Integer>    (. var
-                                  typ1: Integer;
+SimExpr<var typ: TType>      (. var
+                                  typ1: TType;
                                   op: TOp; .)
 =
 Term<typ>
 { AddOp<op>
-  Term<typ1>                 (. if (typ <> integer) or (typ1 <> integer) then
-                                  SemErr('integer type expected');
+  Term<typ1>                 (. if (typ <> TType.int) or (typ1 <> TType.int) then
+                                  SemErr('TType.int type expected');
                                 gen.Emit(op); .)
 }.
 
 Stat                         (. var
-                                  typ: Integer;
+                                  typ: TType;
                                   name: string;
                                   obj: TObj;
                                   adr, adr2, loopstart: Integer; .)
 =
 Ident<name>                  (. obj := tab.Find(name); .)
-( ":="                       (. if obj.kind <> var then
+( ":="                       (. if obj.kind <> variable then
                                   SemErr('cannot assign to procedure'); .)
 Expr<typ> ';'                (. if typ <> obj.typ then
                                   SemErr('incompatible types');
@@ -132,8 +132,8 @@ Expr<typ> ';'                (. if typ <> obj.typ then
                                 gen.Emit(TOp.CALL, obj.adr); .)
 )
 | "if"
-  Expr<typ> "then"          (. if typ <> boolean then
-                                  SemErr('boolean type expected');
+  Expr<typ> "then"           (. if typ <> TType.bool then
+                                  SemErr('TType.bool type expected');
                                 gen.Emit(TOp.FJMP, 0);
                                 adr := gen.pc - 2; .)
 Stat
@@ -144,8 +144,8 @@ Stat
   Stat ]                     (. gen.Patch(adr, gen.pc); .)
 
 | "while"                    (. loopstart := gen.pc; .)
-  '(' Expr<typ> ')'          (. if typ <> boolean then
-                                  SemErr('boolean type expected');
+  '(' Expr<typ> ')'          (. if typ <> TType.bool then
+                                  SemErr('TType.bool type expected');
                                 gen.Emit(TOp.FJMP, 0);
                                 adr := gen.pc - 2; .)
   Stat                       (. gen.Emit(TOp.JMP, loopstart);
@@ -153,7 +153,7 @@ Stat
 
 | "read"
   Ident<name> ';'            (. obj := tab.Find(name);
-                                if obj.typ <> integer then
+                                if obj.typ <> TType.int then
                                   SemErr('integer type expected');
                                 gen.Emit(TOp.READ);
                                 if obj.level = 0 then
@@ -162,7 +162,7 @@ Stat
                                   gen.Emit(TOp.STO, obj.adr); .)
 
 | "write"
-  Expr<typ> ';'               (. if typ <> integer then
+  Expr<typ> ';'               (. if typ <> TType.int then
                                    SemErr('integer type expected');
                                  gen.Emit(TOp.WRITE); .)
 
@@ -180,30 +180,30 @@ Taste                        (. var
                                   SemErr('main function never defined'); .)
 .
 
-Term<var typ: Integer>       (. var
-                                  typ1: Integer;
+Term<var typ: TType>         (. var
+                                  typ1: TType;
                                   op: TOp; .)
 =
 Factor<typ>
 { MulOp<op>
-Factor<typ1>                 (. if (typ <> integer) or (typ1 <> integer) then
+Factor<typ1>                 (. if (typ <> TType.int) or (typ1 <> TType.int) then
                                   SemErr('integer type expected');
                                 gen.Emit(op); .)
 }.
 
-typ<var typ: Integer>
-=                            (. typ := undef; .)
-( "Integer"                  (. typ := integer; .)
-| "boolean"                  (. typ := boolean; .)
+typ<var typ: TType>
+=                            (. typ := TType.undef; .)
+( "Integer"                  (. typ := TType.int; .)
+| "boolean"                  (. typ := TType.bool; .)
 ).
 
 VarDecl                      (. var
                                   name: string;
-                                  typ: Integer; .)
+                                  typ: TType; .)
 =
 typ<typ>
-Ident<name>                  (. tab.NewObj(name, var, typ); .)
-{ ',' Ident<name>            (. tab.NewObj(name, var, typ); .)
+Ident<name>                  (. tab.NewObj(name, variable, typ); .)
+{ ',' Ident<name>            (. tab.NewObj(name, variable, typ); .)
 } ';'
 .
 
