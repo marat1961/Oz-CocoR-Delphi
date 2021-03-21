@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this file. If not, see <https://www.gnu.org/licenses/>.
 *)
+
 unit Taste.Options;
 
 interface
@@ -38,11 +39,10 @@ type
     srcDir: string;
     // directory for generated files
     outDir: string;
+    // name of the trace file
+    traceFileName: string;
     // should coco generate a check for EOF at the end of Parser.Parse():
     checkEOF: Boolean;
-  private
-    // trace options
-    ddtString: string;
   public
     constructor Create;
     function GetVersion: string;

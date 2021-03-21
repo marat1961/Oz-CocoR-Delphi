@@ -39,7 +39,6 @@ type
     _numberSym = 2;
   private
     FTraceStream: TMemoryStream;
-    genScanner: Boolean;
     procedure _AddOp(var op: TOp);
     procedure _Expr(var typ: TType);
     procedure _SimExpr(var typ: TType);
