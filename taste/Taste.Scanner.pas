@@ -48,8 +48,8 @@ var
   i: Integer;
 begin
   inherited;
-  MaxToken := 29;
-  NoSym := 29;
+  MaxToken := 28;
+  NoSym := 28;
   for i := 65 to 90 do start.Add(i, 1);
   for i := 97 to 122 do start.Add(i, 1);
   for i := 48 to 57 do start.Add(i, 2);
@@ -61,12 +61,11 @@ begin
   start.Add(41, 8);
   start.Add(123, 9);
   start.Add(125, 10);
-  start.Add(61, 11);
+  start.Add(61, 16);
   start.Add(60, 12);
   start.Add(62, 13);
-  start.Add(58, 14);
-  start.Add(59, 16);
-  start.Add(44, 17);
+  start.Add(59, 14);
+  start.Add(44, 15);
   start.Add(Ord(TBuffer.EF), -1);
 end;
 
@@ -189,22 +188,20 @@ begin
     t.kind := 9
   else if t.val = 'if' then
     t.kind := 19
-  else if t.val = 'then' then
-    t.kind := 20
   else if t.val = 'else' then
-    t.kind := 21
+    t.kind := 20
   else if t.val = 'while' then
-    t.kind := 22
+    t.kind := 21
   else if t.val = 'read' then
-    t.kind := 23
+    t.kind := 22
   else if t.val = 'write' then
+    t.kind := 23
+  else if t.val = 'void' then
     t.kind := 24
-  else if t.val = 'program' then
+  else if t.val = 'int' then
     t.kind := 25
-  else if t.val = 'Integer' then
+  else if t.val = 'bool' then
     t.kind := 26
-  else if t.val = 'boolean' then
-    t.kind := 27
 end;
 
 function TTasteScanner.NextToken: TToken;
@@ -313,25 +310,24 @@ begin
         t.kind := 16; break;
       end;
       14:
-      if ch = '=' then
-      begin
-        AddCh; state := 15;
-      end
-      else
-      begin
-        state := 0;
-      end;
-      15:
-      begin
-        t.kind := 17; break;
-      end;
-      16:
       begin
         t.kind := 18; break;
       end;
-      17:
+      15:
       begin
-        t.kind := 28; break;
+        t.kind := 27; break;
+      end;
+      16:
+      begin
+        recEnd := pos; recKind := 17;
+        if ch = '=' then
+        begin
+          AddCh; state := 11;
+        end
+        else
+        begin
+          t.kind := 17; break;
+        end;
       end;
     end;
   until false;

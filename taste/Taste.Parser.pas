@@ -152,7 +152,7 @@ begin
     op := TOp.SUB;
   end
   else
-    SynErr(30);
+    SynErr(29);
 end;
 
 procedure TTasteParser._Expr(var typ: TType);
@@ -205,7 +205,7 @@ begin
     op := TOp.GTR;
   end
   else
-    SynErr(31);
+    SynErr(30);
 end;
 
 procedure TTasteParser._Factor(var typ: TType);
@@ -260,7 +260,7 @@ begin
     typ := TType.bool;
   end
   else
-    SynErr(32);
+    SynErr(31);
 end;
 
 procedure TTasteParser._Ident(var name: string);
@@ -282,7 +282,7 @@ begin
     op := TOp.opDIV;
   end
   else
-    SynErr(33);
+    SynErr(32);
 end;
 
 procedure TTasteParser._ProcDecl;
@@ -305,7 +305,7 @@ begin
   adr := gen.pc - 2;
   while StartOf(1) do
   begin
-    if (la.kind = 26) or (la.kind = 27) then
+    if (la.kind = 25) or (la.kind = 26) then
     begin
       _VarDecl;
     end
@@ -329,7 +329,7 @@ begin
   _typ(typ);
   _Ident(name);
   tab.NewObj(name, variable, typ);
-  while la.kind = 28 do
+  while la.kind = 27 do
   begin
     Get;
     _Ident(name);
@@ -354,7 +354,7 @@ begin
       begin
         Get;
         if obj.kind <> variable then
-          SemErr('cannot assign to procedure');
+           SemErr('cannot assign to procedure');
         _Expr(typ);
         Expect(18);
         if typ <> obj.typ then
@@ -374,19 +374,20 @@ begin
         gen.Emit(TOp.CALL, obj.adr);
       end
       else
-        SynErr(34);
+        SynErr(33);
     end;
     19:
     begin
       Get;
+      Expect(10);
       _Expr(typ);
-      Expect(20);
+      Expect(11);
       if typ <> TType.bool then
         SemErr('TType.bool type expected');
       gen.Emit(TOp.FJMP, 0);
       adr := gen.pc - 2;
       _Stat;
-      if la.kind = 21 then
+      if la.kind = 20 then
       begin
         Get;
         gen.Emit(TOp.JMP, 0);
@@ -397,7 +398,7 @@ begin
       end;
       gen.Patch(adr, gen.pc);
     end;
-    22:
+    21:
     begin
       Get;
       loopstart := gen.pc;
@@ -412,7 +413,7 @@ begin
       gen.Emit(TOp.JMP, loopstart);
       gen.Patch(adr, gen.pc);
     end;
-    23:
+    22:
     begin
       Get;
       _Ident(name);
@@ -426,7 +427,7 @@ begin
       else
         gen.Emit(TOp.STO, obj.adr);
     end;
-    24:
+    23:
     begin
       Get;
       _Expr(typ);
@@ -452,7 +453,7 @@ begin
       Expect(13);
     end;
     else
-      SynErr(35);
+      SynErr(34);
   end;
 end;
 
@@ -476,13 +477,13 @@ procedure TTasteParser._Taste;
 var
   name: string;
 begin
-  Expect(25);
+  Expect(24);
   _Ident(name);
   tab.OpenScope;
   Expect(12);
-  while (la.kind = 9) or (la.kind = 26) or (la.kind = 27) do
+  while (la.kind = 9) or (la.kind = 25) or (la.kind = 26) do
   begin
-    if (la.kind = 26) or (la.kind = 27) then
+    if (la.kind = 25) or (la.kind = 26) then
     begin
       _VarDecl;
     end
@@ -500,18 +501,18 @@ end;
 procedure TTasteParser._typ(var typ: TType);
 begin
   typ := TType.undef;
-  if la.kind = 26 then
+  if la.kind = 25 then
   begin
     Get;
     typ := TType.int;
   end
-  else if la.kind = 27 then
+  else if la.kind = 26 then
   begin
     Get;
     typ := TType.bool;
   end
   else
-    SynErr(36);
+    SynErr(35);
 end;
 
 procedure TTasteParser.Parse;
@@ -527,17 +528,17 @@ function TTasteParser.Starts(s, kind: Integer): Boolean;
 const
   x = false;
   T = true;
-  sets: array [0..2] of array [0..30] of Boolean = (
-    (T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x),
-    (x,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,T, x,x,T,T, T,x,T,T, x,x,x),
-    (x,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,T, x,x,T,T, T,x,x,x, x,x,x));
+  sets: array [0..2] of array [0..29] of Boolean = (
+    (T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x),
+    (x,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,T, x,T,T,T, x,T,T,x, x,x),
+    (x,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,T, x,T,T,T, x,x,x,x, x,x));
 begin
   Result := sets[s, kind];
 end;
 
 function TTasteParser.ErrorMsg(nr: Integer): string;
 const
-  MaxErr = 36;
+  MaxErr = 35;
   Errors: array [0 .. MaxErr] of string = (
     {0} 'EOF expected',
     {1} 'ident expected',
@@ -553,29 +554,28 @@ const
     {11} ''')'' expected',
     {12} '''{'' expected',
     {13} '''}'' expected',
-    {14} '''='' expected',
+    {14} '"==" expected',
     {15} '''<'' expected',
     {16} '''>'' expected',
-    {17} '":=" expected',
+    {17} '"=" expected',
     {18} ''';'' expected',
     {19} '"if" expected',
-    {20} '"then" expected',
-    {21} '"else" expected',
-    {22} '"while" expected',
-    {23} '"read" expected',
-    {24} '"write" expected',
-    {25} '"program" expected',
-    {26} '"Integer" expected',
-    {27} '"boolean" expected',
-    {28} ''','' expected',
-    {29} '??? expected',
-    {30} 'invalid AddOp',
-    {31} 'invalid RelOp',
-    {32} 'invalid Factor',
-    {33} 'invalid MulOp',
+    {20} '"else" expected',
+    {21} '"while" expected',
+    {22} '"read" expected',
+    {23} '"write" expected',
+    {24} '"void" expected',
+    {25} '"int" expected',
+    {26} '"bool" expected',
+    {27} ''','' expected',
+    {28} '??? expected',
+    {29} 'invalid AddOp',
+    {30} 'invalid RelOp',
+    {31} 'invalid Factor',
+    {32} 'invalid MulOp',
+    {33} 'invalid Stat',
     {34} 'invalid Stat',
-    {35} 'invalid Stat',
-    {36} 'invalid typ');
+    {35} 'invalid typ');
 begin
   if nr <= MaxErr then
     Result := Errors[nr]
