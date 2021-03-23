@@ -20,24 +20,27 @@ interface
 uses
   Oz.Cocor.Utils, Oz.Cocor.Lib;
 
+{$T+}
+{$SCOPEDENUMS ON}
+
 type
 
   // type
   TType = (undef, int, bool);
 
   // object kind
-  TObjectKind = (variable, proc, scope);
+  TObjKind = (&var, proc, scope);
 
   // object describing a declared name
   TObj = class
-    name: string;      // name of the object
-    typ: TType;        // type of the object (undef for proc)
-    next: TObj;        // to next object in same scope
-    kind: TObjectKind; // variable, proc, scope
-    adr: Integer;      // address in memory or start of proc
-    level: Integer;    // nesting level; 0=global, 1=local
-    locals: TObj;      // scopes: to locally declared objects
-    nextAdr: Integer;  // scopes: next free address in this scope
+    name: string;     // name of the object
+    typ: TType;       // type of the object (undef for proc)
+    next: TObj;       // to next object in same scope
+    kind: TObjKind;    // variable, proc, scope
+    adr: Integer;     // address in memory or start of proc
+    level: Integer;   // nesting level; 0=global, 1=local
+    locals: TObj;     // scopes: to locally declared objects
+    nextAdr: Integer; // scopes: next free address in this scope
   end;
 
   TSymbolTable = class(TCocoPart)
@@ -52,7 +55,7 @@ type
     // close the current scope
     procedure CloseScope;
     // create a new object node in the current scope
-    function NewObj(const name: string; kind: TObjectKind; typ: TType): TObj;
+    function NewObj(const name: string; kind: TObjKind; typ: TType): TObj;
     // search the name in all open scopes and return its object node
     function Find(const name: string): TObj;
   end;
@@ -62,6 +65,9 @@ implementation
 uses
   Taste.Parser;
 
+{$T+}
+{$SCOPEDENUMS ON}
+
 constructor TSymbolTable.Create(parser: TBaseParser);
 begin
   inherited;
@@ -69,8 +75,8 @@ begin
   curLevel := -1;
   undefObj := TObj.Create;
   undefObj.name := 'undef';
-  undefObj.typ := undef;
-  undefObj.kind := variable;
+  undefObj.typ := TType.undef;
+  undefObj.kind := TObjKind.&var;
   undefObj.adr := 0;
   undefObj.level := 0;
   undefObj.next := nil;
@@ -82,7 +88,7 @@ var
 begin
   scop := TObj.Create;
   scop.name := '';
-  scop.kind := scope;
+  scop.kind := TObjKind.scope;
   scop.locals := nil;
   scop.nextAdr := 0;
   scop.next := topScope;
@@ -96,7 +102,7 @@ begin
   Dec(curLevel);
 end;
 
-function TSymbolTable.NewObj(const name: string; kind: TObjectKind; typ: TType): TObj;
+function TSymbolTable.NewObj(const name: string; kind: TObjKind; typ: TType): TObj;
 var
   p, last, obj: TObj;
 begin
@@ -118,7 +124,7 @@ begin
     topScope.locals := obj
   else
     last.next := obj;
-  if kind = variable then
+  if kind = TObjKind.&var then
   begin
     obj.adr := topScope.nextAdr;
     Inc(topScope.nextAdr);

@@ -41,7 +41,7 @@ Factor<var typ: TType>       (. var
 =                            (. typ := TType.undef; .)
 ( Ident<name>                (. obj := tab.Find(name);
                                 typ := obj.typ;
-                                if obj.kind = variable then
+                                if obj.kind = TObjKind.&var then
                                 begin
                                   if obj.level = 0 then
                                     gen.Emit(TOp.LOADG, obj.adr)
@@ -50,7 +50,7 @@ Factor<var typ: TType>       (. var
                                 end else
                                   SemErr('variable expected'); .)
 | number                     (. n := StrToInt(t.val);
-                                gen.Emit(TOp.opCONST, n);
+                                gen.Emit(TOp.CONST, n);
                                 typ := TType.int; .)
 | '-' Factor<typ>            (. if typ <> TType.int then
                                 begin
@@ -58,9 +58,9 @@ Factor<var typ: TType>       (. var
                                   typ := TType.int;
                                 end;
                                 gen.Emit(TOp.NEG); .)
-| "true"                     (. gen.Emit(TOp.opCONST, 1);
+| "true"                     (. gen.Emit(TOp.CONST, 1);
                                 typ := TType.bool; .)
-| "false"                    (. gen.Emit(TOp.opCONST, 0);
+| "false"                    (. gen.Emit(TOp.CONST, 0);
                                 typ := TType.bool; .)
 ).
 
@@ -71,7 +71,7 @@ Ident<var name: string>
 MulOp<var op: TOp>
 =                            (. op := TOp.MUL; .)
   ( '*'
-  | '/'                      (. op := TOp.opDIV; .)
+  | '/'                      (. op := TOp.DIV; .)
   )
 .
 
@@ -80,7 +80,7 @@ ProcDecl                     (. var
                                   obj: TObj;
                                   adr: Integer; .)
 =
-"procedure" Ident<name>      (. obj := tab.NewObj(name, proc, TType.undef);
+"procedure" Ident<name>      (. obj := tab.NewObj(name, TObjKind.proc, TType.undef);
                                 obj.adr := gen.pc;
                                 if name = 'Main' then
                                   gen.progStart := gen.pc;
@@ -119,7 +119,7 @@ Stat                         (. var
                                   adr, adr2, loopstart: Integer; .)
 =
 Ident<name>                  (. obj := tab.Find(name); .)
-( "="                        (. if obj.kind <> variable then
+( "="                        (. if obj.kind <> TObjKind.&var then
                                   SemErr('cannot assign to procedure'); .)
 Expr<typ> ';'                (. if typ <> obj.typ then
                                   SemErr('incompatible types');
@@ -127,7 +127,7 @@ Expr<typ> ';'                (. if typ <> obj.typ then
                                   gen.Emit(TOp.STOG, obj.adr)
                                 else
                                   gen.Emit(TOp.STO, obj.adr); .)
-| '(' ')' ';'                (. if obj.kind <> proc then
+| '(' ')' ';'                (. if obj.kind <> TObjKind.proc then
                                   SemErr('object is not a procedure');
                                 gen.Emit(TOp.CALL, obj.adr); .)
 )
@@ -202,8 +202,8 @@ VarDecl                      (. var
                                   typ: TType; .)
 =
 typ<typ>
-Ident<name>                  (. tab.NewObj(name, variable, typ); .)
-{ ',' Ident<name>            (. tab.NewObj(name, variable, typ); .)
+Ident<name>                  (. tab.NewObj(name, TObjKind.&var, typ); .)
+{ ',' Ident<name>            (. tab.NewObj(name, TObjKind.&var, typ); .)
 } ';'
 .
 

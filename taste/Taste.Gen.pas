@@ -23,20 +23,23 @@ interface
 uses
   System.Classes, System.SysUtils, Oz.Cocor.Utils, Oz.Cocor.Lib;
 
+{$T+}
+{$SCOPEDENUMS ON}
+
 type
 
   // opcodes
   TOp = (
-    ADD, SUB, MUL, opDIV, EQU, LSS, GTR, NEG,
-    LOAD, LOADG, STO, STOG, opCONST,
+    ADD, SUB, MUL, &DIV, EQU, LSS, GTR, NEG,
+    LOAD, LOADG, STO, STOG, &CONST,
     CALL, RET, ENTER, LEAVE, JMP, FJMP, READ, WRITE);
 
   TCodeGenerator = class(TCocoPart)
   const
     opcode: array [TOp] of string = (
-      'ADD  ', 'SUB  ', 'MUL  ', 'DIV  ', 'EQU  ', 'LSS  ', 'GTR  ', 'NEG  ',
-      'LOAD ', 'LOADG', 'STO  ', 'STOG ', 'CONST', 'CALL ', 'RET  ', 'ENTER',
-      'LEAVE', 'JMP  ', 'FJMP ', 'READ ', 'WRITE');
+      'ADD', 'SUB', 'MUL', 'DIV', 'EQU', 'LSS', 'GTR', 'NEG',
+      'LOAD', 'LOADG', 'STO', 'STOG', 'CONST', 'CALL', 'RET', 'ENTER',
+      'LEAVE', 'JMP', 'FJMP ', 'READ', 'WRITE');
   private
     function Next: Integer;
     function Next2: Integer;
@@ -118,12 +121,11 @@ begin
     s := Format('%d:3 : %d', [pc - 1, opcode[code]]);
     System.Write(s);
     case code of
-      TOp.LOAD, TOp.LOADG, TOp.opCONST, TOp.STO, TOp.STOG,
+      TOp.LOAD, TOp.LOADG, TOp.CONST, TOp.STO, TOp.STOG,
       TOp.CALL, TOp.ENTER, TOp.JMP, TOp.FJMP:
         Writeln(Next2);
-      TOp.ADD, TOp.SUB, TOp.MUL, TOp.opDIV, TOp.NEG,
-      TOp.EQU, TOp.LSS, TOp.GTR, TOp.RET, TOp.LEAVE,
-      TOp.READ, TOp.WRITE:
+      TOp.ADD, TOp.SUB, TOp.MUL, TOp.DIV, TOp.NEG, TOp.EQU,
+      TOp.LSS, TOp.GTR, TOp.RET, TOp.LEAVE, TOp.READ, TOp.WRITE:
         Writeln;
     end;
   end;
@@ -203,7 +205,7 @@ begin
   bp := 0;
   repeat
     case TOp(Next) of
-      TOp.opCONST:
+      TOp.CONST:
         Push(Next2);
       TOp.LOAD:
         Push(stack[bp + Next2]);
@@ -217,7 +219,7 @@ begin
         Push(Pop + Pop);
       TOp.SUB:
         Push(-Pop + Pop);
-      TOp.opDIV:
+      TOp.DIV:
         begin
           val := Pop;
           Push(Pop div val);

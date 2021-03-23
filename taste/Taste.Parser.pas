@@ -27,6 +27,9 @@ uses
   System.Classes, System.SysUtils, System.Character, System.IOUtils,
   Oz.Cocor.Utils, Oz.Cocor.Lib, Taste.Scanner, Taste.Options, Taste.Tab, Taste.Gen;
 
+{$T+}
+{$SCOPEDENUMS ON}
+
 type
 
 {$Region 'TTasteParser'}
@@ -220,7 +223,7 @@ begin
     _Ident(name);
     obj := tab.Find(name);
     typ := obj.typ;
-    if obj.kind = variable then
+    if obj.kind = TObjKind.&var then
     begin
       if obj.level = 0 then
         gen.Emit(TOp.LOADG, obj.adr)
@@ -233,7 +236,7 @@ begin
   begin
     Get;
     n := StrToInt(t.val);
-    gen.Emit(TOp.opCONST, n);
+    gen.Emit(TOp.CONST, n);
     typ := TType.int;
   end
   else if la.kind = 4 then
@@ -250,13 +253,13 @@ begin
   else if la.kind = 5 then
   begin
     Get;
-    gen.Emit(TOp.opCONST, 1);
+    gen.Emit(TOp.CONST, 1);
     typ := TType.bool;
   end
   else if la.kind = 6 then
   begin
     Get;
-    gen.Emit(TOp.opCONST, 0);
+    gen.Emit(TOp.CONST, 0);
     typ := TType.bool;
   end
   else
@@ -279,7 +282,7 @@ begin
   else if la.kind = 8 then
   begin
     Get;
-    op := TOp.opDIV;
+    op := TOp.DIV;
   end
   else
     SynErr(32);
@@ -293,7 +296,7 @@ var
 begin
   Expect(9);
   _Ident(name);
-  obj := tab.NewObj(name, proc, TType.undef);
+  obj := tab.NewObj(name, TObjKind.proc, TType.undef);
   obj.adr := gen.pc;
   if name = 'Main' then
     gen.progStart := gen.pc;
@@ -328,12 +331,12 @@ var
 begin
   _typ(typ);
   _Ident(name);
-  tab.NewObj(name, variable, typ);
+  tab.NewObj(name, TObjKind.&var, typ);
   while la.kind = 27 do
   begin
     Get;
     _Ident(name);
-    tab.NewObj(name, variable, typ);
+    tab.NewObj(name, TObjKind.&var, typ);
   end;
   Expect(18);
 end;
@@ -353,8 +356,8 @@ begin
       if la.kind = 17 then
       begin
         Get;
-        if obj.kind <> variable then
-           SemErr('cannot assign to procedure');
+        if obj.kind <> TObjKind.&var then
+          SemErr('cannot assign to procedure');
         _Expr(typ);
         Expect(18);
         if typ <> obj.typ then
@@ -369,7 +372,7 @@ begin
         Get;
         Expect(11);
         Expect(18);
-        if obj.kind <> proc then
+        if obj.kind <> TObjKind.proc then
           SemErr('object is not a procedure');
         gen.Emit(TOp.CALL, obj.adr);
       end
