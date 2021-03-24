@@ -80,7 +80,7 @@ ProcDecl                     (. var
                                   obj: TObj;
                                   adr: Integer; .)
 =
-"procedure" Ident<name>      (. obj := tab.NewObj(name, TObjKind.proc, TType.undef);
+"void" Ident<name>           (. obj := tab.NewObj(name, TObjKind.proc, TType.undef);
                                 obj.adr := gen.pc;
                                 if name = 'Main' then
                                   gen.progStart := gen.pc;
@@ -171,7 +171,7 @@ Stat
 
 Taste                        (. var
                                   name: string; .)
-= "void"
+= "program"
   Ident<name>                (. tab.OpenScope; .)
   '{'
   { VarDecl | ProcDecl }

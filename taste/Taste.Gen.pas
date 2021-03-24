@@ -121,7 +121,7 @@ begin
   while pc < maxPc do
   begin
     code := TOp(Next);
-    s := Format('%d:3 : %d', [pc - 1, opcode[code]]);
+    s := Format('%3d : %s', [pc - 1, opcode[code]]);
     trace.Write(s);
     case code of
       TOp.LOAD, TOp.LOADG, TOp.CONST, TOp.STO, TOp.STOG,

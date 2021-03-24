@@ -184,7 +184,7 @@ begin
     t.kind := 5
   else if t.val = 'false' then
     t.kind := 6
-  else if t.val = 'procedure' then
+  else if t.val = 'void' then
     t.kind := 9
   else if t.val = 'if' then
     t.kind := 19
@@ -196,7 +196,7 @@ begin
     t.kind := 22
   else if t.val = 'write' then
     t.kind := 23
-  else if t.val = 'void' then
+  else if t.val = 'program' then
     t.kind := 24
   else if t.val = 'int' then
     t.kind := 25
