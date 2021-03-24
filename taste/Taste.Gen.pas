@@ -37,9 +37,9 @@ type
   TCodeGenerator = class(TCocoPart)
   const
     opcode: array [TOp] of string = (
-      'ADD', 'SUB', 'MUL', 'DIV', 'EQU', 'LSS', 'GTR', 'NEG',
-      'LOAD', 'LOADG', 'STO', 'STOG', 'CONST', 'CALL', 'RET', 'ENTER',
-      'LEAVE', 'JMP', 'FJMP ', 'READ', 'WRITE');
+      'ADD  ', 'SUB  ', 'MUL  ', 'DIV  ', 'EQU  ', 'LSS  ', 'GTR  ', 'NEG  ',
+      'LOAD ', 'LOADG', 'STO  ', 'STOG ', 'CONST', 'CALL ', 'RET  ', 'ENTER',
+      'LEAVE', 'JMP  ', 'FJMP ', 'READ ', 'WRITE');
   private
     function Next: Integer;
     function Next2: Integer;
@@ -72,6 +72,9 @@ type
   end;
 
 implementation
+
+uses
+  Taste.Parser;
 
 constructor TCodeGenerator.Create(parser: TBaseParser);
 begin
@@ -119,14 +122,14 @@ begin
   begin
     code := TOp(Next);
     s := Format('%d:3 : %d', [pc - 1, opcode[code]]);
-    System.Write(s);
+    trace.Write(s);
     case code of
       TOp.LOAD, TOp.LOADG, TOp.CONST, TOp.STO, TOp.STOG,
       TOp.CALL, TOp.ENTER, TOp.JMP, TOp.FJMP:
-        Writeln(Next2);
+        trace.WriteLine(Next2);
       TOp.ADD, TOp.SUB, TOp.MUL, TOp.DIV, TOp.NEG, TOp.EQU,
       TOp.LSS, TOp.GTR, TOp.RET, TOp.LEAVE, TOp.READ, TOp.WRITE:
-        Writeln;
+        trace.WriteLine;
     end;
   end;
 end;
@@ -229,7 +232,7 @@ begin
       TOp.NEG:
         Push(-Pop);
       TOp.EQU:
-        Push(Int(Pop =Pop));
+        Push(Int(Pop = Pop));
       TOp.LSS:
         Push(Int(Pop > Pop));
       TOp.GTR:

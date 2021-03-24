@@ -41,7 +41,7 @@ type
     outDir: string;
     // name of the trace file
     traceFileName: string;
-    // should coco generate a check for EOF at the end of Parser.Parse():
+    // should coco generate a check for EOF at the end of Parser.Parse
     checkEOF: Boolean;
   public
     constructor Create;

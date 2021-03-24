@@ -56,8 +56,11 @@ begin
       parser := TTasteParser.Create(TTasteScanner.Create(src), str);
       try
         parser.Parse;
-        parser.gen.Decode();
-        parser.gen.Interpret('Taste.IN');
+        if parser.errors.Count = 0 then
+        begin
+          parser.gen.Decode;
+          parser.gen.Interpret('Taste.IN');
+        end;
         parser.SaveTraceToFile(options.traceFileName);
         FindFirst(options.traceFileName, faAnyFile, sr);
         if sr.Size = 0 then

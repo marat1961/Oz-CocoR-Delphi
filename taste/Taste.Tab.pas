@@ -14,7 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this file. If not, see <https://www.gnu.org/licenses/>.
 *)
-unit Taste.Tab;
+
+unit Taste.Tab;
+
 interface
 
 uses
@@ -36,7 +38,7 @@ type
     name: string;     // name of the object
     typ: TType;       // type of the object (undef for proc)
     next: TObj;       // to next object in same scope
-    kind: TObjKind;    // variable, proc, scope
+    kind: TObjKind;   // variable, proc, scope
     adr: Integer;     // address in memory or start of proc
     level: Integer;   // nesting level; 0=global, 1=local
     locals: TObj;     // scopes: to locally declared objects
