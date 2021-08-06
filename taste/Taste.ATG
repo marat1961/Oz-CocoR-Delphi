@@ -1,5 +1,7 @@
 COMPILER Taste
 
+IGNORECASE
+
 CHARACTERS
   letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
   digit = "0123456789".

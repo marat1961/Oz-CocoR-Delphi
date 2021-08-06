@@ -24,12 +24,13 @@ unit Taste.Scanner;
 interface
 
 uses
-  System.SysUtils, Oz.Cocor.Utils, Oz.Cocor.Lib;
+  System.SysUtils, System.Character, Oz.Cocor.Utils, Oz.Cocor.Lib;
 
 type
 
   TTasteScanner = class(TBaseScanner)
   private
+    valCh: char;
     function Comment0: Boolean;
     function Comment1: Boolean;
     procedure CheckLiteral;
@@ -50,7 +51,6 @@ begin
   inherited;
   MaxToken := 28;
   NoSym := 28;
-  for i := 65 to 90 do start.Add(i, 1);
   for i := 97 to 122 do start.Add(i, 1);
   for i := 48 to 57 do start.Add(i, 2);
   start.Add(43, 3);
@@ -87,13 +87,18 @@ begin
       Inc(line); col := 0;
     end;
   end;
+  if ch <> Buffer.EOF then
+  begin
+    valCh := char(ch);
+    ch := char.ToLower(char(ch));
+  end;
 end;
 
 procedure TTasteScanner.AddCh;
 begin
   if ch <> TBuffer.EF then
   begin
-    tval := tval + ch; Inc(tlen);
+    tval := tval + valCh; Inc(tlen);
     NextCh;
   end;
 end;
@@ -179,28 +184,30 @@ begin
 end;
 
 procedure TTasteScanner.CheckLiteral;
+var s: string;
 begin
-  if t.val = 'true' then
+  s := t.val.ToLower;
+  if s = 'true' then
     t.kind := 5
-  else if t.val = 'false' then
+  else if s = 'false' then
     t.kind := 6
-  else if t.val = 'void' then
+  else if s = 'void' then
     t.kind := 9
-  else if t.val = 'if' then
+  else if s = 'if' then
     t.kind := 19
-  else if t.val = 'else' then
+  else if s = 'else' then
     t.kind := 20
-  else if t.val = 'while' then
+  else if s = 'while' then
     t.kind := 21
-  else if t.val = 'read' then
+  else if s = 'read' then
     t.kind := 22
-  else if t.val = 'write' then
+  else if s = 'write' then
     t.kind := 23
-  else if t.val = 'program' then
+  else if s = 'program' then
     t.kind := 24
-  else if t.val = 'int' then
+  else if s = 'int' then
     t.kind := 25
-  else if t.val = 'bool' then
+  else if s = 'bool' then
     t.kind := 26
 end;
 
@@ -243,7 +250,7 @@ begin
       1:
       begin
         recEnd := pos; recKind := 1;
-        if Between(ch, '0', '9') or Between(ch, 'A', 'Z') or Between(ch, 'a', 'z') then
+        if Between(ch, '0', '9') or Between(ch, 'a', 'z') then
         begin
           AddCh; state := 1;
         end

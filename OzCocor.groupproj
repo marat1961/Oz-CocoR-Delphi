@@ -9,6 +9,12 @@
         <Projects Include="test\CocorTests.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="CocorPad.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="taste\Taste.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -35,14 +41,32 @@
     <Target Name="CocorTests:Make">
         <MSBuild Projects="test\CocorTests.dproj" Targets="Make"/>
     </Target>
+    <Target Name="CocorPad">
+        <MSBuild Projects="CocorPad.dproj"/>
+    </Target>
+    <Target Name="CocorPad:Clean">
+        <MSBuild Projects="CocorPad.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CocorPad:Make">
+        <MSBuild Projects="CocorPad.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Taste">
+        <MSBuild Projects="taste\Taste.dproj"/>
+    </Target>
+    <Target Name="Taste:Clean">
+        <MSBuild Projects="taste\Taste.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Taste:Make">
+        <MSBuild Projects="taste\Taste.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="Cocor;CocorTests"/>
+        <CallTarget Targets="Cocor;CocorTests;CocorPad;Taste"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="Cocor:Clean;CocorTests:Clean"/>
+        <CallTarget Targets="Cocor:Clean;CocorTests:Clean;CocorPad:Clean;Taste:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="Cocor:Make;CocorTests:Make"/>
+        <CallTarget Targets="Cocor:Make;CocorTests:Make;CocorPad:Make;Taste:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

@@ -4,7 +4,7 @@ unit -->unitname<;
 interface
 
 uses
-  System.SysUtils, Oz.Cocor.Utils, Oz.Cocor.Lib;
+  System.SysUtils, System.Character, Oz.Cocor.Utils, Oz.Cocor.Lib;
 
 type
 

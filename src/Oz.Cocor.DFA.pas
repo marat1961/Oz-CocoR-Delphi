@@ -1587,7 +1587,7 @@ begin
     gen.Write(unitName);
     g.CopyFramePart('-->valch_decl<');
     if ignoreCase then
-      gen.Write('    valCh: char;');
+      gen.WriteLine('    valCh: char;');
     g.CopyFramePart('-->declarations<');
     gen.WriteLine('  MaxToken := %d;', [tab.terminals.Count - 1]);
     gen.WriteLine('  NoSym := %d;', [tab.noSym.n]);
@@ -1597,10 +1597,10 @@ begin
     g.CopyFramePart('-->nextchcase<');
     if ignoreCase then
     begin
-      gen.WriteLine('  if ch <> Buffer.EOF then');
+      gen.WriteLine('  if not Buffer.EOF then');
       gen.WriteLine('  begin');
       gen.WriteLine('    valCh := char(ch);');
-      gen.WriteLine('    ch := char.ToLower(char(ch));');
+      gen.WriteLine('    ch := System.Character.ToLower(char(ch));');
       gen.WriteLine('  end;');
     end;
     gen.WriteLine('end;');
