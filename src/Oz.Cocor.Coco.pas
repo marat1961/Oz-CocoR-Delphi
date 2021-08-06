@@ -60,6 +60,7 @@ var
   parser: TcrParser;
   sr: TSearchRec;
   src, stem, filename: string;
+  errors, warnings: Integer;
 begin
   options := GetOptions;
   Writeln(options.GetVersion);
@@ -89,7 +90,11 @@ begin
         else
           Writeln('trace output is in ', options.traceFileName);
         FindClose(sr);
-        Writeln(parser.errors.count, ' errors detected');
+        parser.errors.GetInfo(errors, warnings);
+        if errors > 0 then
+          Writeln(errors, ' errors detected');
+        if warnings > 0 then
+          Writeln(warnings, ' warnings detected');
         parser.PrintErrors;
         stem := TPath.GetFilenameWithoutExtension(options.SrcName);
         filename := TPath.Combine(options.srcDir, stem + '.lst');

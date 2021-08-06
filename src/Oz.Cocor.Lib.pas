@@ -176,6 +176,8 @@ type
     procedure Warning(const s: string; line, col: Integer); overload;
     procedure Warning(const s: string); overload;
     procedure Print(const src: string; lst: TStrings);
+     // number of errors & warnings detected
+    procedure GetInfo(var errors, warnings: Integer);
     // number of errors detected
     property Count: Integer read GetCount;
   end;
@@ -573,6 +575,21 @@ end;
 function TErrors.GetCount: Integer;
 begin
   Result := FErrors.Count + FInternalErrors.Count;
+end;
+
+procedure TErrors.GetInfo(var errors, warnings: Integer);
+var
+  i: Integer;
+begin
+  errors := 0;
+  warnings := FInternalErrors.Count;
+  for i := 0 to FErrors.Count - 1 do
+  begin
+    if FErrors.Items[i].lvl = elWarning then
+      Inc(warnings)
+    else
+      Inc(errors);
+  end;
 end;
 
 procedure TErrors.SynErr(nr, line, col: Integer);
