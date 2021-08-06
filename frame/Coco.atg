@@ -475,7 +475,7 @@ Sym_<var name: string; var kind: Integer>
 
 /*------------------------------------------------------------------------------------*/
 
-Attribs<p: TNode>              
+Attribs<p: TNode>
 =
   '<'                          (. p.pos.Start(la); .)
   { ANY }
