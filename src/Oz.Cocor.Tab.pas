@@ -1338,6 +1338,7 @@ procedure TTab.UpdateScannerAndParserTypes;
 begin
   NewMacro('scanner', GetScannerType);
   NewMacro('parser', GetParserType);
+  NewMacro('namespace', Options.namespace);
 end;
 
 function TTab.NewMacro(const name, stuff: string): TMacroDef;

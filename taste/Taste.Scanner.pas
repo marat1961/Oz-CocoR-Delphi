@@ -87,10 +87,10 @@ begin
       Inc(line); col := 0;
     end;
   end;
-  if ch <> Buffer.EOF then
+  if not Buffer.EOF then
   begin
     valCh := char(ch);
-    ch := char.ToLower(char(ch));
+    ch := System.Character.ToLower(char(ch));
   end;
 end;
 
