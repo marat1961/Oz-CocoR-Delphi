@@ -61,9 +61,9 @@ It is not desirable to change the order of sections, as this can lead to compila
 Now for the current implementation it is mandatory to specify this parameter.
 Otherwise code will be generated with errors.
 Example of running a program
-```
+
     Cocor.exe -namespace Taste -checkEOF -trace AG taste.atg.
-```
+
 Namespace is used when generating a module name.
 This is now used in the scanner & parser frames.   
    
