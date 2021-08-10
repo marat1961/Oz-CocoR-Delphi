@@ -1,0 +1,174 @@
+﻿-->begin<
+unit -->unitname<;
+
+interface
+
+uses
+  System.Classes, System.SysUtils, System.Character, System.IOUtils,
+  Oz.Cocor.Utils, Oz.Cocor.Lib, -->namespace<.Scanner, -->namespace<.Options, -->namespace<.Tab, -->namespace<.Gen;
+
+{$T+}
+{$SCOPEDENUMS ON}
+
+type
+
+{$Region '-->parser<'}
+
+  -->parser<= class(TBaseParser)
+  const
+-->declarations<
+-->constants<  private
+    FTraceStream: TMemoryStream;
+-->headers<  protected
+    function Starts(s, kind: Integer): Boolean; override;
+    procedure Get; override;
+  public
+    options: TOptions;
+    trace: TStreamWriter;
+    tab: TSymbolTable;
+    gen: TCodeGenerator;
+    tokenString: string;
+  public
+    constructor Create(scanner: TBaseScanner; listing: TStrings);
+    destructor Destroy; override;
+    function ErrorMsg(nr: Integer): string; override;
+    procedure Parse; override;
+    procedure SaveTraceToFile(const fileName: string);
+  end;
+
+{$EndRegion}
+
+{$Region 'TCocoPartHelper'}
+
+  TCocoPartHelper = class helper for TCocoPart
+  private
+    function GetParser: TTasteParser;
+    function GetScanner: TTasteScanner;
+    function GetOptions: TOptions;
+    function GetTab: TSymbolTable;
+    function GetPgen: TCodeGenerator;
+    function GetTrace: TTextWriter;
+    function GetErrors: TErrors;
+  public
+    property parser: TTasteParser read GetParser;
+    property scanner: TTasteScanner read GetScanner;
+    property options: TOptions read GetOptions;
+    property tab: TSymbolTable read GetTab;
+    property gen: TCodeGenerator read GetPgen;
+    property trace: TTextWriter read GetTrace;
+    property errors: TErrors read GetErrors;
+ end;
+
+{$EndRegion}
+
+implementation
+
+{$Region '-->parser<'}
+
+constructor -->parser<.Create(scanner: TBaseScanner; listing: TStrings);
+begin
+  inherited Create(scanner, listing);
+  options := GetOptions;
+  FTraceStream := TMemoryStream.Create;
+  trace := TStreamWriter.Create(FTraceStream);
+  tab := TSymbolTable.Create(Self);
+  gen := TCodeGenerator.Create(Self);
+end;
+
+destructor -->parser<.Destroy;
+begin
+  trace.Free;
+  tab.Free;
+  gen.Free;
+  FTraceStream.Free;
+  inherited;
+end;
+
+procedure -->parser<.SaveTraceToFile(const fileName: string);
+begin
+  FTraceStream.Position := 0;
+  FTraceStream.SaveToFile(fileName);
+  trace.Close;
+end;
+
+procedure -->parser<.Get;
+begin
+  repeat
+    t := la;
+    la := scanner.Scan;
+    if la.kind <= scanner.MaxToken then
+    begin
+      Inc(errDist);
+      break;
+    end;
+-->pragmas<
+    la := t;
+  until False;
+end;
+-->productions<
+procedure -->parser<.Parse;
+begin
+  la := scanner.NewToken;
+  la.val := '';
+  Get;
+-->parseRoot<
+end;
+
+function -->parser<.Starts(s, kind: Integer): Boolean;
+-->initialization<
+begin
+  Result := sets[s, kind];
+end;
+
+function -->parser<.ErrorMsg(nr: Integer): string;
+-->errors<
+begin
+  if nr <= MaxErr then
+    Result := Errors[nr]
+  else
+    Result := 'error ' + IntToStr(nr);
+end;
+
+{$EndRegion}
+
+{$Region 'TCocoPartHelper'}
+
+function TCocoPartHelper.GetParser: -->parser<;
+begin
+  Result := FParser as -->parser<;
+end;
+
+function TCocoPartHelper.GetScanner: -->scanner<;
+begin
+  Result := parser.scanner as -->scanner<;
+end;
+
+function TCocoPartHelper.GetOptions: TOptions;
+begin
+  Result := parser.options;
+end;
+
+function TCocoPartHelper.GetTab: TSymbolTable;
+begin
+  Result := parser.tab;
+end;
+
+function TCocoPartHelper.GetPgen: TCodeGenerator;
+begin
+  Result := parser.gen;
+end;
+
+function TCocoPartHelper.GetTrace: TTextWriter;
+begin
+  Result := parser.trace;
+end;
+
+function TCocoPartHelper.GetErrors: TErrors;
+begin
+  Result := parser.errors;
+end;
+
+{$EndRegion}
+
+end.
+
